@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card, art_style %}
+{% block title %}{{ STORE_NAME }} - Shop everything, colourfully{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    {% if not search and not active_category %}
+    <section class="hero">
+        <div class="hero-inner">
+            <span class="tag" style="background:rgba(255,255,255,.2);color:#fff">&#10024; MCA Integrated Project</span>
+            <h1>Shop smarter.<br>Pay securely. Get it fast.</h1>
+            <p>Six categories, {{ products|length }}+ live products, a full inventory system and a
+               simulated {{ GATEWAY_NAME }} payment gateway - all in one Flask application.</p>
+            <div style="display:flex;gap:.7rem;flex-wrap:wrap">
+                <a href="#catalogue" class="btn btn-light">Start shopping</a>
+                {% if not current_user_name %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-sunset">Create free account</a>
+                {% endif %}
+            </div>
+            <div class="hero-stats">
+                <div><strong>{{ categories|length }}</strong><span>Categories</span></div>
+                <div><strong>{{ products|length }}</strong><span>Products live</span></div>
+                <div><strong>4</strong><span>Payment modes</span></div>
+                <div><strong>24&times;7</strong><span>Support</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-head">
+            <div>
+                <h2>Shop by <span class="gradient-text">category</span></h2>
+                <p>Hand-picked collections across the store</p>
+            </div>
+        </div>
+        <div class="grid cat-grid">
+            {% for c in categories %}
+                <a class="cat-tile" href="{{ url_for('main.index', category=c.slug) }}"
+                   style="background:linear-gradient(135deg,{{ c.color }},{{ c.color }}bb)">
+                    <span class="emoji">{{ c.icon }}</span>
+                    {{ c.name }}
+                    <small>{{ c.product_count }} items</small>
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if deals %}
+    <section>
+        <div class="section-head">
+            <div>
+                <h2>&#128293; Today's <span class="gradient-text">best deals</span></h2>
+                <p>Biggest discounts in the store right now</p>
+            </div>
+        </div>
+        <div class="grid products-grid">
+            {% for p in deals %}{{ product_card(p, CURRENCY) }}{% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% endif %}
+
+    <section id="catalogue">
+        <div class="section-head">
+            <div>
+                <h2>
+                    {% if search %}Results for "<span class="gradient-text">{{ search }}</span>"
+                    {% elif active_category %}
+                        {% for c in categories if c.slug == active_category %}
+                            {{ c.icon }} <span class="gradient-text">{{ c.name }}</span>
+                        {% endfor %}
+                    {% else %}All <span class="gradient-text">products</span>{% endif %}
+                </h2>
+                <p>{{ products|length }} product{{ '' if products|length == 1 else 's' }} found</p>
+            </div>
+
+            <form method="get" id="sortForm" style="display:flex;gap:.5rem;align-items:center">
+                {% if search %}<input type="hidden" name="q" value="{{ search }}">{% endif %}
+                {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}">{% endif %}
+                {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+                {% if in_stock %}<input type="hidden" name="in_stock" value="1">{% endif %}
+                <label for="sort" style="font-size:.85rem;color:var(--muted)">Sort</label>
+                <select name="sort" id="sort" style="width:auto" onchange="document.getElementById('sortForm').submit()">
+                    <option value="featured"   {{ 'selected' if sort == 'featured' }}>Featured</option>
+                    <option value="price_low"  {{ 'selected' if sort == 'price_low' }}>Price: low to high</option>
+                    <option value="price_high" {{ 'selected' if sort == 'price_high' }}>Price: high to low</option>
+                    <option value="rating"     {{ 'selected' if sort == 'rating' }}>Customer rating</option>
+                    <option value="newest"     {{ 'selected' if sort == 'newest' }}>Newest first</option>
+                </select>
+            </form>
+        </div>
+
+        <div class="shop-layout">
+            <aside class="card card-pad filters">
+                <form method="get" id="filterForm">
+                    {% if search %}<input type="hidden" name="q" value="{{ search }}">{% endif %}
+                    <input type="hidden" name="sort" value="{{ sort }}">
+
+                    <div class="filter-group" style="padding-top:0">
+                        <h4>Category</h4>
+                        <div class="filter-list">
+                            <a class="{{ 'active' if not active_category }}"
+                               href="{{ url_for('main.index', q=search, sort=sort) }}">All categories</a>
+                            {% for c in categories %}
+                                <a class="{{ 'active' if active_category == c.slug }}"
+                                   href="{{ url_for('main.index', category=c.slug, q=search, sort=sort) }}">
+                                    <span>{{ c.icon }} {{ c.name }}</span><span>{{ c.product_count }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                        {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}">{% endif %}
+                    </div>
+
+                    <div class="filter-group">
+                        <h4>Max price</h4>
+                        <input type="range" name="max_price" min="100" max="{{ price_ceiling }}" step="100"
+                               value="{{ max_price|int if max_price else price_ceiling }}"
+                               oninput="document.getElementById('priceOut').textContent = '{{ CURRENCY }}' + Number(this.value).toLocaleString('en-IN')">
+                        <div style="display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted)">
+                            <span>{{ CURRENCY }}100</span>
+                            <strong id="priceOut" style="color:var(--indigo)">
+                                {{ CURRENCY }}{{ (max_price|int if max_price else price_ceiling) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <h4>Availability</h4>
+                        <label class="check">
+                            <input type="checkbox" name="in_stock" value="1" {{ 'checked' if in_stock }}>
+                            In stock only
+                        </label>
+                    </div>
+
+                    <button class="btn btn-primary btn-block btn-sm" type="submit">Apply filters</button>
+                    <a class="btn btn-ghost btn-block btn-sm" style="margin-top:.5rem"
+                       href="{{ url_for('main.index') }}">Reset</a>
+                </form>
+            </aside>
+
+            <div>
+                {% if products %}
+                    <div class="grid products-grid">
+                        {% for p in products %}{{ product_card(p, CURRENCY) }}{% endfor %}
+                    </div>
+                {% else %}
+                    <div class="card empty">
+                        <div class="emoji">&#128269;</div>
+                        <h3>No products matched your search</h3>
+                        <p>Try a different keyword, widen the price range or clear the filters.</p>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-primary">Browse all products</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

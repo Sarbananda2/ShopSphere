@@ -1,0 +1,50 @@
+{# Reusable UI fragments #}
+
+{% macro art_style(gradient) -%}
+background:linear-gradient(135deg,{{ gradient.split(',')[0] }},{{ gradient.split(',')[1] }});
+{%- endmacro %}
+
+{% macro stars(rating) -%}
+    <span class="rating">&#11088; {{ '%.1f'|format(rating) }}</span>
+{%- endmacro %}
+
+{% macro product_card(p, currency) %}
+    {% set off = ((p.mrp - p.price) / p.mrp * 100) | round | int if p.mrp and p.mrp > p.price else 0 %}
+    <article class="product-card">
+        {% if off %}<span class="badge">{{ off }}% OFF</span>{% endif %}
+        {% if p.stock == 0 %}
+            <span class="badge badge-stock">Out of stock</span>
+        {% elif p.stock <= 10 %}
+            <span class="badge badge-stock">Only {{ p.stock }} left</span>
+        {% endif %}
+
+        <a href="{{ url_for('main.product_detail', product_id=p.id) }}" class="product-art"
+           style="{{ art_style(p.gradient) }}" aria-label="{{ p.name }}">{{ p.icon }}</a>
+
+        <div class="product-body">
+            <span class="product-cat" style="color:{{ p.category_color if p.category_color else '#6366f1' }}">
+                {{ p.category_name if p.category_name else 'Shop' }}
+            </span>
+            <a href="{{ url_for('main.product_detail', product_id=p.id) }}" class="product-name">{{ p.name }}</a>
+            {{ stars(p.rating) }}
+            <div class="price-row">
+                <span class="price">{{ currency }}{{ p.price | money }}</span>
+                {% if off %}<span class="mrp">{{ currency }}{{ p.mrp | money }}</span>{% endif %}
+            </div>
+            <button class="btn btn-primary btn-sm btn-block add-to-cart"
+                    data-id="{{ p.id }}" {{ 'disabled' if p.stock == 0 }}>
+                {{ 'Out of stock' if p.stock == 0 else 'Add to cart' }}
+            </button>
+        </div>
+    </article>
+{% endmacro %}
+
+{% macro status_tag(status) %}
+    {% set map = {
+        'PENDING': 'tag-warn', 'CONFIRMED': 'tag-info', 'PACKED': 'tag-info',
+        'SHIPPED': 'tag-info', 'DELIVERED': 'tag-ok', 'CANCELLED': 'tag-err',
+        'PAID': 'tag-ok', 'UNPAID': 'tag-muted', 'FAILED': 'tag-err',
+        'COD_PENDING': 'tag-warn', 'REFUNDED': 'tag-info', 'SUCCESS': 'tag-ok'
+    } %}
+    <span class="tag {{ map.get(status, 'tag-muted') }}">{{ status.replace('_', ' ') | title }}</span>
+{% endmacro %}

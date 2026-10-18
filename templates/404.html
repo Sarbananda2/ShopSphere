@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Page not found - {{ STORE_NAME }}{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="card empty" style="margin-top:2.5rem">
+        <div class="emoji">&#128373;&#65039;</div>
+        <h3 style="font-size:1.6rem">404 - we couldn't find that page</h3>
+        <p>The product or page you were looking for may have been moved or removed.</p>
+        <a class="btn btn-primary" href="{{ url_for('main.index') }}">Back to the store</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import art_style %}
+{% block title %}Products - Admin{% endblock %}
+{% block page_title %}Product <span class="gradient-text">management</span>{% endblock %}
+{% block page_sub %}{{ products|length }} products in the catalogue{% endblock %}
+
+{% block page_actions %}
+<div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <form method="get" style="display:flex;gap:.4rem">
+        <input class="input" name="q" value="{{ search }}" placeholder="Search name or SKU" style="width:200px">
+        <button class="btn btn-ghost btn-sm" type="submit">Search</button>
+    </form>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('admin.product_new') }}">+ Add product</a>
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th><th>Category</th><th class="t-right">Price</th>
+                <th class="t-right">Stock</th><th>Status</th><th class="t-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products %}
+                <tr>
+                    <td>
+                        <div class="cell-prod">
+                            <span class="cell-art" style="{{ art_style(p.gradient) }}">{{ p.icon }}</span>
+                            <div>
+                                <div style="font-weight:600">{{ p.name }}</div>
+                                <div style="font-size:.76rem;color:var(--muted)">{{ p.sku }} &middot; &#11088; {{ '%.1f'|format(p.rating) }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="tag" style="background:{{ p.category_color }}22;color:{{ p.category_color }}">
+                            {{ p.category_name }}
+                        </span>
+                    </td>
+                    <td class="t-right">
+                        <strong>{{ CURRENCY }}{{ p.price | money }}</strong>
+                        {% if p.mrp > p.price %}
+                            <div class="mrp" style="font-size:.76rem">{{ CURRENCY }}{{ p.mrp | money }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="t-right">
+                        {% if p.stock == 0 %}<span class="tag tag-err">0</span>
+                        {% elif p.stock <= 10 %}<span class="tag tag-warn">{{ p.stock }}</span>
+                        {% else %}<span class="tag tag-ok">{{ p.stock }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if p.is_active %}<span class="tag tag-ok">Live</span>
+                        {% else %}<span class="tag tag-muted">Hidden</span>{% endif %}
+                    </td>
+                    <td class="t-right">
+                        <div style="display:flex;gap:.35rem;justify-content:flex-end">
+                            <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.product_edit', product_id=p.id) }}">Edit</a>
+                            {% if p.is_active %}
+                                <form method="post" action="{{ url_for('admin.product_delete', product_id=p.id) }}"
+                                      onsubmit="return confirm('Hide {{ p.name }} from the storefront?')">
+                                    <button class="btn btn-danger btn-sm" type="submit">Hide</button>
+                                </form>
+                            {% else %}
+                                <form method="post" action="{{ url_for('admin.product_restore', product_id=p.id) }}">
+                                    <button class="btn btn-mint btn-sm" type="submit">Restore</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">No products found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

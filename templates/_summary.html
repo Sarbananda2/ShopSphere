@@ -1,0 +1,42 @@
+{# Price breakdown - re-rendered by cart.js after every cart change #}
+<div class="summary-row">
+    <span>Price ({{ summary.items }} item{{ '' if summary.items == 1 else 's' }})</span>
+    <span>{{ CURRENCY }}{{ summary.mrp_total | money }}</span>
+</div>
+<div class="summary-row">
+    <span>Product discount</span>
+    <span style="color:var(--ok)">&minus; {{ CURRENCY }}{{ (summary.mrp_total - summary.subtotal) | money }}</span>
+</div>
+{% if summary.coupon %}
+    <div class="summary-row">
+        <span>Coupon <strong style="color:var(--indigo)">{{ summary.coupon }}</strong></span>
+        <span style="color:var(--ok)">&minus; {{ CURRENCY }}{{ summary.discount | money }}</span>
+    </div>
+{% endif %}
+<div class="summary-row">
+    <span>GST (18%)</span>
+    <span>+ {{ CURRENCY }}{{ summary.tax | money }}</span>
+</div>
+<div class="summary-row">
+    <span>Delivery</span>
+    {% if summary.shipping == 0 %}
+        <span style="color:var(--ok);font-weight:700">FREE</span>
+    {% else %}
+        <span>+ {{ CURRENCY }}{{ summary.shipping | money }}</span>
+    {% endif %}
+</div>
+<div class="summary-row total">
+    <span>Total payable</span>
+    <span>{{ CURRENCY }}{{ summary.total | money }}</span>
+</div>
+
+{% if summary.free_shipping_gap > 0 and summary.items %}
+    <div class="save-strip" style="background:rgba(245,158,11,.14);color:#b45309">
+        Add {{ CURRENCY }}{{ summary.free_shipping_gap | money }} more for FREE delivery
+    </div>
+{% endif %}
+{% if summary.mrp_total > summary.subtotal or summary.discount %}
+    <div class="save-strip">
+        You save {{ CURRENCY }}{{ (summary.mrp_total - summary.subtotal + summary.discount) | money }} on this order
+    </div>
+{% endif %}

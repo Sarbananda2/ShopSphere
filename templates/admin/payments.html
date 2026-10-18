@@ -1,0 +1,62 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import status_tag %}
+{% block title %}Payments - Admin{% endblock %}
+{% block page_title %}Payment <span class="gradient-text">ledger</span>{% endblock %}
+{% block page_sub %}Every transaction attempted through the {{ GATEWAY_NAME }} gateway{% endblock %}
+
+{% block admin_content %}
+<div class="grid stats-grid">
+    {% set palette = {'SUCCESS': 's3', 'FAILED': 's2', 'PENDING': 's4', 'REFUNDED': 's5'} %}
+    {% for t in totals %}
+        <div class="stat {{ palette.get(t.status, 's1') }}">
+            <div class="label">{{ t.status|title }}</div>
+            <div class="value">{{ CURRENCY }}{{ t.amount | money }}</div>
+            <div class="sub">{{ t.n }} transaction{{ '' if t.n == 1 else 's' }}</div>
+        </div>
+    {% else %}
+        <div class="stat s1">
+            <div class="label">Transactions</div>
+            <div class="value">0</div>
+            <div class="sub">No payments recorded yet</div>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="card table-wrap" style="margin-top:1.4rem">
+    <table>
+        <thead>
+            <tr><th>Transaction</th><th>Order</th><th>Customer</th><th>Method</th>
+                <th class="t-right">Amount</th><th>Status</th><th>When</th></tr>
+        </thead>
+        <tbody>
+            {% for p in payments %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;font-size:.83rem">{{ p.txn_id }}</div>
+                        <div style="font-size:.75rem;color:var(--muted)">{{ p.gateway_ref }}</div>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('orders.order_detail', order_id=p.order_id) }}"
+                           style="color:var(--indigo);font-size:.84rem;font-weight:600">{{ p.order_number }}</a>
+                    </td>
+                    <td style="font-size:.85rem">{{ p.customer }}</td>
+                    <td>
+                        <div style="font-size:.85rem;font-weight:600">{{ p.method|title }}</div>
+                        <div style="font-size:.75rem;color:var(--muted)">{{ p.detail }}</div>
+                    </td>
+                    <td class="t-right"><strong>{{ CURRENCY }}{{ p.amount | money }}</strong></td>
+                    <td>
+                        {{ status_tag(p.status) }}
+                        <div style="font-size:.74rem;color:var(--muted);max-width:190px">{{ p.message }}</div>
+                    </td>
+                    <td style="font-size:.8rem;color:var(--muted);white-space:nowrap">{{ p.created_at[:16] }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">
+                    No transactions yet. Place a test order from the storefront.
+                </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# SQLite Database (optional: exclude live user/test data)
+*.sqlite3
+*.db
+instance/
+
+# IDE files
+.vscode/
+.idea/

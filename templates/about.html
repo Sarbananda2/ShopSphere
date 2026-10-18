@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}About this project - {{ STORE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.4rem">
+    <section class="hero" style="background:linear-gradient(135deg,#0ea5e9,#6366f1 50%,#a855f7)">
+        <div class="hero-inner">
+            <h1>About this project</h1>
+            <p>{{ STORE_NAME }} is a full-stack e-commerce web application built as an MCA
+               Integrated Project. It demonstrates authentication, catalogue and inventory
+               management, a shopping cart, a simulated payment gateway and an admin back-office.</p>
+            <div class="hero-stats">
+                <div><strong>{{ stats.products }}</strong><span>Products</span></div>
+                <div><strong>{{ stats.orders }}</strong><span>Orders processed</span></div>
+                <div><strong>{{ stats.customers }}</strong><span>Registered users</span></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr))">
+        {% set modules = [
+            ('&#128100;', 'User management', 'Registration with server-side validation, PBKDF2 password hashing, session login, profile and password change.'),
+            ('&#128230;', 'Product catalogue', 'Six categories, search, price filter, stock filter, five sort orders and product detail pages.'),
+            ('&#128202;', 'Inventory control', 'Stock levels, low-stock alerts, manual adjustments and a full audit log of every stock movement.'),
+            ('&#128722;', 'Shopping cart', 'Per-user persistent cart, live quantity updates over a JSON API, coupon engine and GST calculation.'),
+            ('&#128179;', 'Payment gateway', 'Simulated PayNova gateway: card with Luhn + OTP, UPI, net banking and cash on delivery.'),
+            ('&#9881;&#65039;', 'Admin back-office', 'Dashboard analytics, product CRUD, order status workflow, payment ledger and customer list.')
+        ] %}
+        {% for icon, title, body in modules %}
+            <div class="card card-pad">
+                <div style="font-size:2rem">{{ icon|safe }}</div>
+                <h3 style="margin:.5rem 0 .4rem;font-size:1.05rem">{{ title }}</h3>
+                <p style="font-size:.88rem;color:var(--text-soft)">{{ body }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="card card-pad" style="margin-top:1.4rem">
+        <h3 style="margin-bottom:.8rem">Technology stack</h3>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            {% for t in ['Python 3', 'Flask', 'Jinja2', 'SQLite 3', 'Werkzeug security', 'HTML5', 'CSS3 (Grid + Flexbox)', 'Vanilla JavaScript', 'Fetch API', 'unittest'] %}
+                <span class="tag tag-info">{{ t }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

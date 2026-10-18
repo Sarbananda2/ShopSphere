@@ -1,0 +1,58 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import status_tag %}
+{% block title %}Orders - Admin{% endblock %}
+{% block page_title %}Order <span class="gradient-text">management</span>{% endblock %}
+{% block page_sub %}{{ orders|length }} order{{ '' if orders|length == 1 else 's' }}{{ ' with status ' + status if status }}{% endblock %}
+
+{% block page_actions %}
+<div style="display:flex;gap:.35rem;flex-wrap:wrap">
+    <a class="chip {{ 'active' if not status }}" href="{{ url_for('admin.orders') }}">All</a>
+    {% for s in flow + ['CANCELLED'] %}
+        <a class="chip {{ 'active' if status == s }}" href="{{ url_for('admin.orders', status=s) }}">{{ s|title }}</a>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card table-wrap">
+    <table>
+        <thead>
+            <tr><th>Order</th><th>Customer</th><th>Payment</th><th class="t-right">Total</th>
+                <th>Status</th><th style="width:230px">Update status</th></tr>
+        </thead>
+        <tbody>
+            {% for o in orders %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('orders.order_detail', order_id=o.id) }}"
+                           style="font-weight:600;font-size:.87rem;color:var(--indigo)">{{ o.order_number }}</a>
+                        <div style="font-size:.76rem;color:var(--muted)">
+                            {{ o.placed_at[:16] }} &middot; {{ o.item_count }} item{{ '' if o.item_count == 1 else 's' }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size:.87rem;font-weight:600">{{ o.customer }}</div>
+                        <div style="font-size:.76rem;color:var(--muted)">{{ o.email }}</div>
+                    </td>
+                    <td>{{ status_tag(o.payment_status) }}</td>
+                    <td class="t-right"><strong>{{ CURRENCY }}{{ o.total | money }}</strong></td>
+                    <td>{{ status_tag(o.status) }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('admin.order_status', order_id=o.id) }}"
+                              style="display:flex;gap:.35rem">
+                            <select name="status" style="flex:1">
+                                {% for s in flow + ['CANCELLED'] %}
+                                    <option value="{{ s }}" {{ 'selected' if o.status == s }}>{{ s|title }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-primary btn-sm" type="submit">Set</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">No orders found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Sign in - {{ STORE_NAME }}{% endblock %}
+{% block catbar %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-wrap">
+        <div class="auth-art">
+            <h2>Welcome back to<br>{{ STORE_NAME }}</h2>
+            <ul>
+                <li><span>&#9889;</span> Pick up right where you left off - your cart is saved</li>
+                <li><span>&#128230;</span> Track every order from payment to delivery</li>
+                <li><span>&#127991;&#65039;</span> Unlock coupon codes worth up to 50% off</li>
+                <li><span>&#128274;</span> Passwords are stored as salted PBKDF2 hashes</li>
+            </ul>
+        </div>
+
+        <div class="card card-pad auth-card">
+            <h1 style="font-size:1.6rem;letter-spacing:-.02em">Sign in</h1>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.4rem">
+                New here? <a href="{{ url_for('auth.register') }}" style="color:var(--indigo);font-weight:700">Create an account</a>
+            </p>
+
+            <form method="post" novalidate>
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input class="input" type="email" id="email" name="email" required
+                           value="{{ email }}" placeholder="you@example.com" autocomplete="email">
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div style="position:relative">
+                        <input class="input" type="password" id="password" name="password" required
+                               placeholder="Enter your password" autocomplete="current-password">
+                        <button type="button" class="pw-toggle" data-target="password"
+                                style="position:absolute;right:10px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer">
+                            &#128065;&#65039;
+                        </button>
+                    </div>
+                </div>
+                <label class="check" style="margin-bottom:1.2rem">
+                    <input type="checkbox" name="remember"> Keep me signed in
+                </label>
+                <button class="btn btn-primary btn-block" type="submit">Sign in &rarr;</button>
+            </form>
+
+            <div class="demo-box">
+                <strong>Demo accounts for evaluation</strong><br>
+                Customer: <code>user@shopsphere.com</code> / <code>User@123</code><br>
+                Admin: <code>admin@shopsphere.com</code> / <code>Admin@123</code>
+                <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
+                    <button class="btn btn-ghost btn-sm" type="button"
+                            onclick="fillLogin('user@shopsphere.com','User@123')">Fill customer</button>
+                    <button class="btn btn-ghost btn-sm" type="button"
+                            onclick="fillLogin('admin@shopsphere.com','Admin@123')">Fill admin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function fillLogin(email, password) {
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = password;
+    }
+</script>
+{% endblock %}

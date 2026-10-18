@@ -1,0 +1,126 @@
+{% extends "admin/_layout.html" %}
+{% block title %}{{ 'Add' if mode == 'new' else 'Edit' }} product - Admin{% endblock %}
+{% block page_title %}{{ 'Add a new' if mode == 'new' else 'Edit' }} <span class="gradient-text">product</span>{% endblock %}
+{% block page_sub %}{{ 'Create a catalogue entry and set its opening stock' if mode == 'new' else 'Update details, pricing and stock' }}{% endblock %}
+{% block page_actions %}<a class="btn btn-ghost btn-sm" href="{{ url_for('admin.products') }}">&larr; Back to products</a>{% endblock %}
+
+{% block admin_content %}
+<form method="post" class="cart-layout" novalidate>
+    <div class="card card-pad">
+        <div class="field">
+            <label for="name">Product name *</label>
+            <input class="input" id="name" name="name" required value="{{ product.name or '' }}">
+        </div>
+
+        <div class="row-2">
+            <div class="field">
+                <label for="sku">SKU *</label>
+                <input class="input" id="sku" name="sku" required value="{{ product.sku or '' }}"
+                       placeholder="ELE-007" style="text-transform:uppercase">
+            </div>
+            <div class="field">
+                <label for="category_id">Category *</label>
+                <select id="category_id" name="category_id" required>
+                    {% for c in categories %}
+                        <option value="{{ c.id }}" {{ 'selected' if product.category_id == c.id }}>
+                            {{ c.icon }} {{ c.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="description">Description</label>
+            <textarea class="input" id="description" name="description">{{ product.description or '' }}</textarea>
+        </div>
+
+        <div class="row-3">
+            <div class="field">
+                <label for="price">Selling price ({{ CURRENCY }}) *</label>
+                <input class="input" id="price" name="price" type="number" step="0.01" min="0" required
+                       value="{{ product.price or '' }}">
+            </div>
+            <div class="field">
+                <label for="mrp">MRP ({{ CURRENCY }}) *</label>
+                <input class="input" id="mrp" name="mrp" type="number" step="0.01" min="0" required
+                       value="{{ product.mrp or '' }}">
+            </div>
+            <div class="field">
+                <label for="stock">Stock quantity *</label>
+                <input class="input" id="stock" name="stock" type="number" min="0" required
+                       value="{{ product.stock if product.stock is not none else 0 }}">
+            </div>
+        </div>
+
+        <div class="row-3">
+            <div class="field">
+                <label for="icon">Display emoji</label>
+                <input class="input" id="icon" name="icon" maxlength="4" value="{{ product.icon or '' }}">
+                <div class="hint">Shown as the product artwork.</div>
+            </div>
+            <div class="field">
+                <label for="rating">Rating (0-5)</label>
+                <input class="input" id="rating" name="rating" type="number" step="0.1" min="0" max="5"
+                       value="{{ product.rating or 4.0 }}">
+            </div>
+            <div class="field">
+                <label for="gradient">Artwork gradient</label>
+                <input class="input" id="gradient" name="gradient" value="{{ product.gradient or '#6366f1,#8b5cf6' }}">
+                <div class="hint">Two hex colours, comma separated.</div>
+            </div>
+        </div>
+
+        <label class="check" style="margin:.4rem 0 1.2rem">
+            <input type="checkbox" name="is_active" value="1" {{ 'checked' if product.is_active }}>
+            Visible on the storefront
+        </label>
+
+        <button class="btn btn-primary" type="submit">
+            {{ 'Create product' if mode == 'new' else 'Save changes' }}
+        </button>
+        <a class="btn btn-ghost" href="{{ url_for('admin.products') }}">Cancel</a>
+    </div>
+
+    <div class="card card-pad summary">
+        <h3 style="margin-bottom:.9rem;font-size:1.05rem">Live preview</h3>
+        <article class="product-card">
+            <div class="product-art" id="prevArt"
+                 style="background:linear-gradient(135deg,{{ (product.gradient or '#6366f1,#8b5cf6').split(',')[0] }},{{ (product.gradient or '#6366f1,#8b5cf6').split(',')[1] }})">
+                <span id="prevIcon">{{ product.icon or '&#128230;'|safe }}</span>
+            </div>
+            <div class="product-body">
+                <span class="product-cat" style="color:var(--indigo)">Preview</span>
+                <span class="product-name" id="prevName">{{ product.name or 'Product name' }}</span>
+                <div class="price-row">
+                    <span class="price" id="prevPrice">{{ CURRENCY }}{{ product.price or 0 }}</span>
+                    <span class="mrp" id="prevMrp">{{ CURRENCY }}{{ product.mrp or 0 }}</span>
+                </div>
+            </div>
+        </article>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.9rem">
+            Changing stock here is recorded in the inventory audit log automatically.
+        </p>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const bind = (id, fn) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', fn);
+    };
+    bind('name',  e => document.getElementById('prevName').textContent = e.target.value || 'Product name');
+    bind('icon',  e => document.getElementById('prevIcon').textContent = e.target.value || '\u{1F4E6}');
+    bind('price', e => document.getElementById('prevPrice').textContent = '{{ CURRENCY }}' + (e.target.value || 0));
+    bind('mrp',   e => document.getElementById('prevMrp').textContent = '{{ CURRENCY }}' + (e.target.value || 0));
+    bind('gradient', e => {
+        const parts = e.target.value.split(',');
+        if (parts.length === 2) {
+            document.getElementById('prevArt').style.background =
+                `linear-gradient(135deg,${parts[0].trim()},${parts[1].trim()})`;
+        }
+    });
+</script>
+{% endblock %}

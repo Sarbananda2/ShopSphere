@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_tag %}
+{% block title %}My account - {{ STORE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.4rem">
+    <div class="section-head" style="margin-top:0">
+        <div>
+            <h2>My <span class="gradient-text">account</span></h2>
+            <p>Manage your profile, address and password</p>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('orders.my_orders') }}">View all orders &rarr;</a>
+    </div>
+
+    <div class="grid stats-grid" style="margin-bottom:1.4rem">
+        <div class="stat s1">
+            <div class="label">Member since</div>
+            <div class="value" style="font-size:1.1rem">{{ user.created_at[:10] }}</div>
+            <div class="sub">{{ 'Administrator' if user.role == 'admin' else 'Customer account' }}</div>
+        </div>
+        <div class="stat s3">
+            <div class="label">Orders placed</div>
+            <div class="value">{{ orders|length }}</div>
+            <div class="sub">Last 5 shown below</div>
+        </div>
+        <div class="stat s2">
+            <div class="label">Total spent</div>
+            <div class="value">{{ CURRENCY }}{{ spent | money }}</div>
+            <div class="sub">Across all paid orders</div>
+        </div>
+    </div>
+
+    <div class="cart-layout">
+        <div style="display:grid;gap:1.4rem">
+            <div class="card card-pad">
+                <h3 style="margin-bottom:1rem">Profile details</h3>
+                <form method="post">
+                    <div class="row-2">
+                        <div class="field">
+                            <label for="name">Full name</label>
+                            <input class="input" id="name" name="name" value="{{ user.name }}" required>
+                        </div>
+                        <div class="field">
+                            <label for="email">Email (cannot be changed)</label>
+                            <input class="input" id="email" value="{{ user.email }}" disabled>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="phone">Mobile number</label>
+                        <input class="input" id="phone" name="phone" maxlength="10" value="{{ user.phone or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="address">Default delivery address</label>
+                        <textarea class="input" id="address" name="address">{{ user.address or '' }}</textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Save changes</button>
+                </form>
+            </div>
+
+            <div class="card card-pad">
+                <h3 style="margin-bottom:1rem">Change password</h3>
+                <form method="post" action="{{ url_for('auth.change_password') }}">
+                    <div class="row-2">
+                        <div class="field">
+                            <label for="current_password">Current password</label>
+                            <input class="input" type="password" id="current_password" name="current_password" required>
+                        </div>
+                        <div class="field">
+                            <label for="new_password">New password</label>
+                            <input class="input" type="password" id="new_password" name="new_password" required>
+                            <div class="hint">8+ characters with a letter, a number and a symbol.</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline" type="submit">Update password</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card card-pad summary">
+            <h3 style="margin-bottom:.9rem">Recent orders</h3>
+            {% if orders %}
+                <div style="display:grid;gap:.8rem">
+                    {% for o in orders %}
+                        <a href="{{ url_for('orders.order_detail', order_id=o.id) }}"
+                           style="display:block;padding:.8rem;border:1px solid var(--line);border-radius:var(--r-sm)">
+                            <div style="display:flex;justify-content:space-between;gap:.5rem;align-items:center">
+                                <strong style="font-size:.85rem">{{ o.order_number }}</strong>
+                                {{ status_tag(o.status) }}
+                            </div>
+                            <div style="display:flex;justify-content:space-between;margin-top:.35rem;font-size:.85rem;color:var(--muted)">
+                                <span>{{ o.placed_at[:10] }}</span>
+                                <strong style="color:var(--text)">{{ CURRENCY }}{{ o.total | money }}</strong>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color:var(--muted);font-size:.9rem">No orders yet.</p>
+                <a class="btn btn-primary btn-sm btn-block" style="margin-top:.8rem"
+                   href="{{ url_for('main.index') }}">Start shopping</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Create account - {{ STORE_NAME }}{% endblock %}
+{% block catbar %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-wrap">
+        <div class="auth-art" style="background:linear-gradient(135deg,#f59e0b,#ec4899 55%,#8b5cf6)">
+            <h2>Join {{ STORE_NAME }}<br>in 30 seconds</h2>
+            <ul>
+                <li><span>&#127873;</span> Flat 10% off your first order with <strong>WELCOME10</strong></li>
+                <li><span>&#128666;</span> Free delivery on every order above {{ CURRENCY }}999</li>
+                <li><span>&#128179;</span> Card, UPI, net-banking and cash on delivery</li>
+                <li><span>&#128241;</span> OTP-verified payments on every card transaction</li>
+            </ul>
+        </div>
+
+        <div class="card card-pad auth-card">
+            <h1 style="font-size:1.6rem;letter-spacing:-.02em">Create your account</h1>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.4rem">
+                Already registered? <a href="{{ url_for('auth.login') }}" style="color:var(--indigo);font-weight:700">Sign in</a>
+            </p>
+
+            <form method="post" novalidate id="regForm">
+                <div class="field">
+                    <label for="name">Full name *</label>
+                    <input class="input" id="name" name="name" required minlength="3"
+                           value="{{ form.get('name', '') }}" placeholder="Your full name">
+                </div>
+                <div class="row-2">
+                    <div class="field">
+                        <label for="email">Email address *</label>
+                        <input class="input" type="email" id="email" name="email" required
+                               value="{{ form.get('email', '') }}" placeholder="you@example.com">
+                    </div>
+                    <div class="field">
+                        <label for="phone">Mobile number</label>
+                        <input class="input" id="phone" name="phone" inputmode="numeric" maxlength="10"
+                               value="{{ form.get('phone', '') }}" placeholder="10-digit number">
+                    </div>
+                </div>
+                <div class="row-2">
+                    <div class="field">
+                        <label for="password">Password *</label>
+                        <input class="input" type="password" id="password" name="password" required
+                               placeholder="Min. 8 characters">
+                        <div class="bar" style="margin-top:.45rem"><i id="pwBar" style="width:0"></i></div>
+                        <div class="hint" id="pwHint">Use 8+ characters with a letter, a number and a symbol.</div>
+                    </div>
+                    <div class="field">
+                        <label for="confirm_password">Confirm password *</label>
+                        <input class="input" type="password" id="confirm_password" name="confirm_password" required
+                               placeholder="Re-enter password">
+                        <div class="hint" id="matchHint"></div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="address">Default delivery address</label>
+                    <textarea class="input" id="address" name="address"
+                              placeholder="House / flat, street, city, PIN code">{{ form.get('address', '') }}</textarea>
+                </div>
+                <label class="check" style="margin-bottom:1.2rem">
+                    <input type="checkbox" required> I agree to the terms of this demo store
+                </label>
+                <button class="btn btn-primary btn-block" type="submit">Create account</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const pw = document.getElementById('password');
+    const cpw = document.getElementById('confirm_password');
+    const bar = document.getElementById('pwBar');
+    const hint = document.getElementById('pwHint');
+    const matchHint = document.getElementById('matchHint');
+
+    pw.addEventListener('input', () => {
+        const v = pw.value;
+        let score = 0;
+        if (v.length >= 8) score++;
+        if (/[A-Za-z]/.test(v)) score++;
+        if (/\d/.test(v)) score++;
+        if (/[^A-Za-z0-9]/.test(v)) score++;
+        const colors = ['#ef4444', '#f59e0b', '#eab308', '#10b981'];
+        const labels = ['Too weak', 'Weak', 'Good', 'Strong password'];
+        bar.style.width = (score * 25) + '%';
+        bar.style.background = colors[Math.max(score - 1, 0)];
+        hint.textContent = v ? labels[Math.max(score - 1, 0)] : 'Use 8+ characters with a letter, a number and a symbol.';
+    });
+
+    cpw.addEventListener('input', () => {
+        if (!cpw.value) { matchHint.textContent = ''; return; }
+        const ok = cpw.value === pw.value;
+        matchHint.textContent = ok ? 'Passwords match' : 'Passwords do not match';
+        matchHint.style.color = ok ? 'var(--ok)' : 'var(--err)';
+    });
+</script>
+{% endblock %}

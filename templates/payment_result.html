@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Payment successful' if success else 'Payment failed' }} - {{ STORE_NAME }}{% endblock %}
+{% block catbar %}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.6rem;max-width:660px">
+
+    {% if success %}
+    <div class="steps">
+        <div class="step done"><i>&#10003;</i><span>Cart</span></div><div class="step-line"></div>
+        <div class="step done"><i>&#10003;</i><span>Address</span></div><div class="step-line"></div>
+        <div class="step done"><i>&#10003;</i><span>Payment</span></div><div class="step-line"></div>
+        <div class="step active"><i>&#10003;</i><span>Done</span></div>
+    </div>
+    {% endif %}
+
+    <div class="card card-pad" style="text-align:center">
+        <div class="result-icon {{ 'ok' if success else 'bad' }}">{{ '&#10004;'|safe if success else '&#10006;'|safe }}</div>
+
+        <h1 style="font-size:1.5rem;letter-spacing:-.02em">
+            {% if success %}
+                {{ 'Order placed successfully!' if order.payment_status != 'COD_PENDING' else 'Order confirmed!' }}
+            {% else %}
+                Payment failed
+            {% endif %}
+        </h1>
+        <p style="color:var(--text-soft);margin:.5rem 0 1.4rem">{{ message }}</p>
+
+        <div class="kv" style="text-align:left;padding:1.1rem;background:var(--surface-2);border-radius:var(--r)">
+            <dt>Order number</dt><dd>{{ order.order_number }}</dd>
+            <dt>Transaction ID</dt><dd>{{ txn.txn_id }}</dd>
+            {% if txn.gateway_ref and txn.gateway_ref != '-' %}
+                <dt>Gateway reference</dt><dd>{{ txn.gateway_ref }}</dd>
+            {% endif %}
+            <dt>Payment method</dt><dd>{{ txn.method | replace('_', ' ') | title }}</dd>
+            {% if detail %}<dt>Instrument</dt><dd>{{ detail }}</dd>{% endif %}
+            <dt>Amount</dt><dd>{{ CURRENCY }}{{ order.total | money }}</dd>
+            <dt>Status</dt>
+            <dd style="color:{{ 'var(--ok)' if success else 'var(--err)' }}">
+                {{ order.payment_status | replace('_', ' ') | title }}
+            </dd>
+        </div>
+
+        {% if success %}
+            <div class="save-strip" style="margin-top:1.1rem">
+                {% if order.payment_status == 'COD_PENDING' %}
+                    Keep {{ CURRENCY }}{{ order.total | money }} ready - your parcel is on the way.
+                {% else %}
+                    A confirmation has been recorded against your account. Expected delivery in 3-5 days.
+                {% endif %}
+            </div>
+            <div style="display:flex;gap:.7rem;justify-content:center;margin-top:1.4rem;flex-wrap:wrap">
+                <a class="btn btn-primary" href="{{ url_for('orders.order_detail', order_id=order.id) }}">View order details</a>
+                <a class="btn btn-ghost" href="{{ url_for('main.index') }}">Continue shopping</a>
+            </div>
+        {% else %}
+            <div style="margin-top:1.1rem;padding:.9rem;border-radius:var(--r-sm);background:rgba(239,68,68,.1);font-size:.86rem;text-align:left">
+                <strong>What you can do</strong>
+                <ul style="margin-top:.4rem;color:var(--text-soft)">
+                    <li>&bull; Check the card number, expiry and CVV and try again</li>
+                    <li>&bull; Use a different payment method such as UPI or cash on delivery</li>
+                    <li>&bull; Your order is saved as unpaid - nothing has been charged</li>
+                </ul>
+            </div>
+            <div style="display:flex;gap:.7rem;justify-content:center;margin-top:1.4rem;flex-wrap:wrap">
+                <a class="btn btn-primary" href="{{ url_for('payment.retry', order_id=order.id) }}">Retry payment</a>
+                <a class="btn btn-ghost" href="{{ url_for('orders.order_detail', order_id=order.id) }}">View order</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <p style="text-align:center;font-size:.78rem;color:var(--muted);margin-top:1rem">
+        {{ GATEWAY_NAME }} is a simulated gateway built for this academic project - no real money is transferred.
+    </p>
+</div>
+{% endblock %}

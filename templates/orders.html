@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_tag %}
+{% block title %}My orders - {{ STORE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.4rem">
+    <div class="section-head" style="margin-top:0">
+        <div>
+            <h2>My <span class="gradient-text">orders</span></h2>
+            <p>{{ orders|length }} order{{ '' if orders|length == 1 else 's' }} placed so far</p>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('main.index') }}">Continue shopping</a>
+    </div>
+
+    {% if orders %}
+        <div style="display:grid;gap:1rem">
+            {% for o in orders %}
+                <div class="card card-pad">
+                    <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:flex-start">
+                        <div>
+                            <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+                                <strong style="font-size:1rem">{{ o.order_number }}</strong>
+                                {{ status_tag(o.status) }}
+                                {{ status_tag(o.payment_status) }}
+                            </div>
+                            <div style="font-size:.84rem;color:var(--muted);margin-top:.35rem">
+                                Placed on {{ o.placed_at[:16] }} &middot; {{ o.item_count }} item{{ '' if o.item_count == 1 else 's' }}
+                                &middot; delivering to {{ o.shipping_name }}
+                            </div>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-size:1.2rem;font-weight:800">{{ CURRENCY }}{{ o.total | money }}</div>
+                            <div style="display:flex;gap:.45rem;margin-top:.55rem;flex-wrap:wrap;justify-content:flex-end">
+                                {% if o.payment_status in ['UNPAID', 'FAILED'] and o.status != 'CANCELLED' %}
+                                    <a class="btn btn-sunset btn-sm" href="{{ url_for('payment.pay', order_id=o.id) }}">Pay now</a>
+                                {% endif %}
+                                <a class="btn btn-outline btn-sm" href="{{ url_for('orders.order_detail', order_id=o.id) }}">Details</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card empty">
+            <div class="emoji">&#128230;</div>
+            <h3>No orders yet</h3>
+            <p>Once you place an order it will show up here with live tracking.</p>
+            <a class="btn btn-primary" href="{{ url_for('main.index') }}">Browse products</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

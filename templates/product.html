@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card, art_style, stars %}
+{% block title %}{{ product.name }} - {{ STORE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb">
+        <a href="{{ url_for('main.index') }}">Home</a> <span>&rsaquo;</span>
+        <a href="{{ url_for('main.index', category=product.category_slug) }}">{{ product.category_name }}</a>
+        <span>&rsaquo;</span> <span style="color:var(--text)">{{ product.name }}</span>
+    </nav>
+
+    {% set off = ((product.mrp - product.price) / product.mrp * 100) | round | int if product.mrp > product.price else 0 %}
+
+    <div class="detail-layout">
+        <div class="detail-art" style="{{ art_style(product.gradient) }}">{{ product.icon }}</div>
+
+        <div>
+            <span class="tag" style="background:{{ product.category_color }}22;color:{{ product.category_color }}">
+                {{ product.category_name }}
+            </span>
+            <h1 style="font-size:clamp(1.5rem,3.4vw,2.1rem);margin:.6rem 0 .4rem;letter-spacing:-.02em">
+                {{ product.name }}
+            </h1>
+            <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+                {{ stars(product.rating) }}
+                <span style="color:var(--muted);font-size:.85rem">SKU: {{ product.sku }}</span>
+            </div>
+
+            <div class="price-row" style="margin:1.1rem 0">
+                <span class="price" style="font-size:2rem">{{ CURRENCY }}{{ product.price | money }}</span>
+                {% if off %}
+                    <span class="mrp" style="font-size:1.05rem">{{ CURRENCY }}{{ product.mrp | money }}</span>
+                    <span class="off" style="font-size:1rem">{{ off }}% off</span>
+                {% endif %}
+            </div>
+            <p style="font-size:.82rem;color:var(--muted);margin-top:-.7rem">
+                Inclusive of all taxes &middot; Free delivery on orders above {{ CURRENCY }}999
+            </p>
+
+            <p style="margin:1.2rem 0;color:var(--text-soft)">{{ product.description }}</p>
+
+            <div style="margin-bottom:1.2rem">
+                {% if product.stock == 0 %}
+                    <span class="tag tag-err">&#10060; Out of stock</span>
+                {% elif product.stock <= 10 %}
+                    <span class="tag tag-warn">&#9889; Hurry - only {{ product.stock }} left</span>
+                {% else %}
+                    <span class="tag tag-ok">&#10004; In stock ({{ product.stock }} units)</span>
+                {% endif %}
+            </div>
+
+            <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+                <div class="qty">
+                    <button type="button" onclick="stepQty(-1)" aria-label="Decrease">&minus;</button>
+                    <span id="qtyOut">1</span>
+                    <button type="button" onclick="stepQty(1)" aria-label="Increase">+</button>
+                </div>
+                <button class="btn btn-primary add-to-cart" data-id="{{ product.id }}"
+                        data-qty-from="qtyOut" {{ 'disabled' if product.stock == 0 }}>
+                    &#128722; Add to cart
+                </button>
+                <a class="btn btn-sunset" href="{{ url_for('cart.view_cart') }}">Go to cart &rarr;</a>
+            </div>
+
+            <div class="feature-row">
+                <div class="feature"><span class="emoji">&#128666;</span> Free delivery above {{ CURRENCY }}999</div>
+                <div class="feature"><span class="emoji">&#128260;</span> 7-day easy returns</div>
+                <div class="feature"><span class="emoji">&#128274;</span> Secure {{ GATEWAY_NAME }} checkout</div>
+                <div class="feature"><span class="emoji">&#128176;</span> Cash on delivery available</div>
+            </div>
+        </div>
+    </div>
+
+    {% if related %}
+        <section>
+            <div class="section-head">
+                <div>
+                    <h2>You may also <span class="gradient-text">like</span></h2>
+                    <p>More from {{ product.category_name }}</p>
+                </div>
+            </div>
+            <div class="grid products-grid">
+                {% for p in related %}{{ product_card(p, CURRENCY) }}{% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const MAX_QTY = {{ product.stock }};
+    function stepQty(delta) {
+        const out = document.getElementById('qtyOut');
+        const next = Math.min(Math.max(1, parseInt(out.textContent, 10) + delta), Math.max(MAX_QTY, 1));
+        out.textContent = next;
+    }
+</script>
+{% endblock %}

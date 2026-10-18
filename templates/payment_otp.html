@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Verify OTP - {{ GATEWAY_NAME }}{% endblock %}
+{% block catbar %}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:2rem;max-width:560px">
+    <div class="card card-pad" style="max-width:520px;margin-inline:auto">
+
+        <div style="text-align:center;border-bottom:1px solid var(--line);padding-bottom:1rem;margin-bottom:1.3rem">
+            <div style="font-size:2.2rem">&#127974;</div>
+            <h2 style="font-size:1.2rem;margin-top:.3rem">{{ GATEWAY_NAME }} Secure &middot; 3-D Secure Verification</h2>
+            <p style="color:var(--muted);font-size:.85rem">{{ detail }}</p>
+        </div>
+
+        {% if error %}
+            <div class="toast danger" style="margin-bottom:1rem">
+                <span>{{ error }}{% if attempts_left %} ({{ attempts_left }} attempt{{ '' if attempts_left == 1 else 's' }} left){% endif %}</span>
+            </div>
+        {% endif %}
+
+        <p style="font-size:.92rem;text-align:center">
+            A one-time password has been sent to <strong>{{ masked_phone }}</strong>
+        </p>
+
+        <form method="post" action="{{ url_for('payment.otp', order_id=order.id) }}" id="otpForm">
+            <div class="otp-inputs">
+                {% for i in range(6) %}
+                    <input type="text" inputmode="numeric" maxlength="1" class="otp-box" aria-label="OTP digit {{ i + 1 }}">
+                {% endfor %}
+            </div>
+            <input type="hidden" name="otp" id="otpValue">
+
+            <div class="demo-box" style="text-align:center">
+                Demo OTP for this project: <code>123456</code>
+            </div>
+
+            <div class="kv" style="margin:1.2rem 0;padding:.9rem;background:var(--surface-2);border-radius:var(--r-sm)">
+                <dt>Merchant</dt><dd>{{ STORE_NAME }}</dd>
+                <dt>Order</dt><dd>{{ order.order_number }}</dd>
+                <dt>Amount</dt><dd>{{ CURRENCY }}{{ order.total | money }}</dd>
+                <dt>Transaction</dt><dd>{{ txn.txn_id }}</dd>
+            </div>
+
+            <button class="btn btn-primary btn-block" type="submit">Verify &amp; pay {{ CURRENCY }}{{ order.total | money }}</button>
+            <a class="btn btn-ghost btn-block btn-sm" style="margin-top:.6rem"
+               href="{{ url_for('payment.pay', order_id=order.id) }}">Cancel and choose another method</a>
+        </form>
+
+        <p style="text-align:center;font-size:.76rem;color:var(--muted);margin-top:1rem">
+            This is a simulated bank page created for an academic project. No real OTP is sent.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/payment.js') }}"></script>
+{% endblock %}

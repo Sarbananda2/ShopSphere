@@ -1,0 +1,151 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import status_tag, art_style %}
+{% block title %}Admin dashboard - {{ STORE_NAME }}{% endblock %}
+{% block page_title %}Admin <span class="gradient-text">dashboard</span>{% endblock %}
+{% block page_sub %}Live snapshot of sales, stock and customers{% endblock %}
+
+{% block admin_content %}
+<div class="grid stats-grid">
+    <div class="stat s1">
+        <div class="label">Total revenue</div>
+        <div class="value">{{ CURRENCY }}{{ stats.revenue | money }}</div>
+        <div class="sub">From paid &amp; COD orders</div>
+    </div>
+    <div class="stat s2">
+        <div class="label">Orders</div>
+        <div class="value">{{ stats.orders }}</div>
+        <div class="sub">{{ stats.pending }} awaiting payment</div>
+    </div>
+    <div class="stat s3">
+        <div class="label">Customers</div>
+        <div class="value">{{ stats.customers }}</div>
+        <div class="sub">Registered accounts</div>
+    </div>
+    <div class="stat s4">
+        <div class="label">Active products</div>
+        <div class="value">{{ stats.products }}</div>
+        <div class="sub">{{ stats.stock_units }} units in stock</div>
+    </div>
+    <div class="stat s5">
+        <div class="label">Inventory value</div>
+        <div class="value">{{ CURRENCY }}{{ stats.stock_value | money }}</div>
+        <div class="sub">Stock on hand at selling price</div>
+    </div>
+    <div class="stat s6">
+        <div class="label">Failed payments</div>
+        <div class="value">{{ stats.failed_payments }}</div>
+        <div class="sub">Declines &amp; OTP failures</div>
+    </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.4fr 1fr;margin-top:1.4rem">
+    <div class="card">
+        <h3 style="padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);font-size:1.05rem">
+            &#9888;&#65039; Low stock alerts
+        </h3>
+        {% if low_stock %}
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Product</th><th>Category</th><th class="t-right">Stock</th><th></th></tr></thead>
+                    <tbody>
+                        {% for p in low_stock %}
+                            <tr>
+                                <td>
+                                    <div class="cell-prod">
+                                        <span class="cell-art" style="{{ art_style(p.gradient) }}">{{ p.icon }}</span>
+                                        <div>
+                                            <div style="font-weight:600">{{ p.name }}</div>
+                                            <div style="font-size:.76rem;color:var(--muted)">{{ p.sku }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="font-size:.85rem;color:var(--muted)">{{ p.category_name }}</td>
+                                <td class="t-right">
+                                    {% if p.stock == 0 %}
+                                        <span class="tag tag-err">Out of stock</span>
+                                    {% else %}
+                                        <span class="tag tag-warn">{{ p.stock }} left</span>
+                                    {% endif %}
+                                </td>
+                                <td class="t-right">
+                                    <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.inventory') }}">Restock</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="padding:1.2rem;color:var(--muted);font-size:.9rem">Every product is comfortably stocked.</p>
+        {% endif %}
+    </div>
+
+    <div class="card card-pad">
+        <h3 style="font-size:1.05rem;margin-bottom:1rem">&#128200; Stock by category</h3>
+        {% set max_units = (by_category | map(attribute='units') | max) or 1 %}
+        {% for c in by_category %}
+            <div style="margin-bottom:.9rem">
+                <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.3rem">
+                    <span>{{ c.name }}</span>
+                    <strong>{{ c.units }} units</strong>
+                </div>
+                <div class="bar">
+                    <i style="width:{{ (c.units / max_units * 100) | round | int }}%;background:{{ c.color }}"></i>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.4fr 1fr;margin-top:1.4rem">
+    <div class="card">
+        <h3 style="padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);font-size:1.05rem">
+            &#128666; Recent orders
+        </h3>
+        {% if recent_orders %}
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="t-right">Total</th></tr></thead>
+                    <tbody>
+                        {% for o in recent_orders %}
+                            <tr onclick="location.href='{{ url_for('orders.order_detail', order_id=o.id) }}'"
+                                style="cursor:pointer">
+                                <td>
+                                    <div style="font-weight:600;font-size:.86rem">{{ o.order_number }}</div>
+                                    <div style="font-size:.76rem;color:var(--muted)">{{ o.placed_at[:16] }}</div>
+                                </td>
+                                <td style="font-size:.86rem">{{ o.customer }}</td>
+                                <td>{{ status_tag(o.status) }}</td>
+                                <td class="t-right"><strong>{{ CURRENCY }}{{ o.total | money }}</strong></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="padding:1.2rem;color:var(--muted);font-size:.9rem">No orders placed yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="card card-pad">
+        <h3 style="font-size:1.05rem;margin-bottom:1rem">&#127942; Best sellers</h3>
+        {% if top_products %}
+            {% for p in top_products %}
+                <div style="display:flex;gap:.7rem;align-items:center;padding:.5rem 0;
+                            {{ 'border-top:1px solid var(--line)' if not loop.first }}">
+                    <span style="font-size:1.4rem">{{ p.icon }}</span>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:.87rem;font-weight:600">{{ p.product_name }}</div>
+                        <div style="font-size:.76rem;color:var(--muted)">{{ p.sold }} sold</div>
+                    </div>
+                    <strong style="font-size:.86rem">{{ CURRENCY }}{{ p.revenue | money }}</strong>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:var(--muted);font-size:.9rem">
+                No sales recorded yet. Place a test order from the storefront to populate this panel.
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

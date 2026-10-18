@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_tag %}
+{% block title %}{{ order.order_number }} - {{ STORE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.2rem">
+    <nav class="breadcrumb">
+        <a href="{{ url_for('main.index') }}">Home</a> <span>&rsaquo;</span>
+        <a href="{{ url_for('orders.my_orders') }}">My orders</a> <span>&rsaquo;</span>
+        <span style="color:var(--text)">{{ order.order_number }}</span>
+    </nav>
+
+    <div class="cart-layout">
+        <div style="display:grid;gap:1.2rem">
+
+            <div class="card card-pad">
+                <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:center">
+                    <div>
+                        <h1 style="font-size:1.35rem">{{ order.order_number }}</h1>
+                        <p style="color:var(--muted);font-size:.86rem">Placed on {{ order.placed_at }}</p>
+                    </div>
+                    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+                        {{ status_tag(order.status) }}{{ status_tag(order.payment_status) }}
+                    </div>
+                </div>
+
+                {% set flow = ['PENDING', 'CONFIRMED', 'PACKED', 'SHIPPED', 'DELIVERED'] %}
+                {% if order.status != 'CANCELLED' %}
+                    {% set idx = flow.index(order.status) if order.status in flow else 0 %}
+                    <div class="timeline" style="margin-top:1.3rem">
+                        {% for step in flow %}
+                            <div class="tl-item">
+                                <span class="tl-dot {{ 'done' if loop.index0 <= idx }}">
+                                    {{ '&#10003;'|safe if loop.index0 <= idx else loop.index }}
+                                </span>
+                                <div>
+                                    <strong style="font-size:.92rem;{{ 'opacity:.5' if loop.index0 > idx }}">{{ step|title }}</strong>
+                                    <div style="font-size:.8rem;color:var(--muted)">
+                                        {% if step == 'PENDING' %}Order created, awaiting payment
+                                        {% elif step == 'CONFIRMED' %}Payment received, order confirmed
+                                        {% elif step == 'PACKED' %}Items picked and packed at the warehouse
+                                        {% elif step == 'SHIPPED' %}Handed over to the delivery partner
+                                        {% else %}Delivered to your address{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="margin-top:1.2rem;padding:1rem;border-radius:var(--r-sm);background:rgba(239,68,68,.1)">
+                        <strong>This order was cancelled.</strong>
+                        {% if order.payment_status == 'REFUNDED' %}
+                            <div style="font-size:.86rem;color:var(--text-soft)">
+                                The amount has been refunded to the original payment method.
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3 style="padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);font-size:1.05rem">
+                    Items ({{ items|length }})
+                </h3>
+                {% for i in items %}
+                    <div style="display:flex;gap:.9rem;align-items:center;padding:.9rem 1.2rem;
+                                {{ 'border-top:1px solid var(--line)' if not loop.first }}">
+                        <span style="font-size:1.8rem">{{ i.icon }}</span>
+                        <div style="flex:1;min-width:0">
+                            <a href="{{ url_for('main.product_detail', product_id=i.product_id) }}"
+                               style="font-weight:600;font-size:.94rem">{{ i.product_name }}</a>
+                            <div style="font-size:.8rem;color:var(--muted)">
+                                {{ CURRENCY }}{{ i.unit_price | money }} &times; {{ i.quantity }}
+                            </div>
+                        </div>
+                        <strong>{{ CURRENCY }}{{ i.line_total | money }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if payments %}
+                <div class="card">
+                    <h3 style="padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);font-size:1.05rem">
+                        Payment history
+                    </h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>Transaction</th><th>Method</th><th>Status</th>
+                                    <th class="t-right">Amount</th><th>When</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for p in payments %}
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight:600;font-size:.84rem">{{ p.txn_id }}</div>
+                                            <div style="font-size:.76rem;color:var(--muted)">{{ p.message }}</div>
+                                        </td>
+                                        <td>{{ p.method|title }}<div style="font-size:.76rem;color:var(--muted)">{{ p.detail }}</div></td>
+                                        <td>{{ status_tag(p.status) }}</td>
+                                        <td class="t-right">{{ CURRENCY }}{{ p.amount | money }}</td>
+                                        <td style="font-size:.8rem;color:var(--muted)">{{ p.created_at[:16] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="display:grid;gap:1.2rem">
+            <div class="card card-pad">
+                <h3 style="margin-bottom:.8rem">Price breakdown</h3>
+                <div class="summary-row"><span>Subtotal</span><span>{{ CURRENCY }}{{ order.subtotal | money }}</span></div>
+                {% if order.discount %}
+                    <div class="summary-row">
+                        <span>Coupon {{ order.coupon_code }}</span>
+                        <span style="color:var(--ok)">&minus; {{ CURRENCY }}{{ order.discount | money }}</span>
+                    </div>
+                {% endif %}
+                <div class="summary-row"><span>GST (18%)</span><span>+ {{ CURRENCY }}{{ order.tax | money }}</span></div>
+                <div class="summary-row">
+                    <span>Delivery</span>
+                    <span>{% if order.shipping %}+ {{ CURRENCY }}{{ order.shipping | money }}{% else %}FREE{% endif %}</span>
+                </div>
+                <div class="summary-row total"><span>Total</span><span>{{ CURRENCY }}{{ order.total | money }}</span></div>
+            </div>
+
+            <div class="card card-pad">
+                <h3 style="margin-bottom:.6rem">Delivery address</h3>
+                <p style="font-size:.9rem;color:var(--text-soft);line-height:1.6">
+                    <strong style="color:var(--text)">{{ order.shipping_name }}</strong><br>
+                    {{ order.shipping_address }}<br>
+                    &#128222; {{ order.shipping_phone }}
+                </p>
+            </div>
+
+            <div class="card card-pad no-print">
+                {% if order.payment_status in ['UNPAID', 'FAILED'] and order.status != 'CANCELLED' %}
+                    <a class="btn btn-sunset btn-block" href="{{ url_for('payment.pay', order_id=order.id) }}">
+                        Complete payment
+                    </a>
+                {% endif %}
+                <button class="btn btn-ghost btn-block btn-sm" style="margin-top:.5rem" onclick="window.print()">
+                    &#128438; Print invoice
+                </button>
+                {% if order.status not in ['SHIPPED', 'DELIVERED', 'CANCELLED'] %}
+                    <form method="post" action="{{ url_for('orders.cancel_order', order_id=order.id) }}"
+                          onsubmit="return confirm('Cancel this order? Paid amounts will be refunded.')">
+                        <button class="btn btn-danger btn-block btn-sm" style="margin-top:.5rem" type="submit">
+                            Cancel order
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

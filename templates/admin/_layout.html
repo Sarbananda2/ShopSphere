@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block catbar %}{% endblock %}
+
+{% block content %}
+<div class="container admin-shell">
+    <aside class="card admin-nav">
+        {% set page = request.endpoint %}
+        <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if page == 'admin.dashboard' }}">&#128202; Dashboard</a>
+        <a href="{{ url_for('admin.products') }}"  class="{{ 'active' if page in ['admin.products', 'admin.product_new', 'admin.product_edit'] }}">&#128230; Products</a>
+        <a href="{{ url_for('admin.inventory') }}" class="{{ 'active' if page == 'admin.inventory' }}">&#127981; Inventory</a>
+        <a href="{{ url_for('admin.orders') }}"    class="{{ 'active' if page == 'admin.orders' }}">&#128666; Orders</a>
+        <a href="{{ url_for('admin.payments') }}"  class="{{ 'active' if page == 'admin.payments' }}">&#128179; Payments</a>
+        <a href="{{ url_for('admin.customers') }}" class="{{ 'active' if page == 'admin.customers' }}">&#128101; Customers</a>
+        <a href="{{ url_for('main.index') }}">&#127978; View storefront</a>
+    </aside>
+
+    <div>
+        <div class="section-head" style="margin-top:0">
+            <div>
+                <h2>{% block page_title %}{% endblock %}</h2>
+                <p>{% block page_sub %}{% endblock %}</p>
+            </div>
+            {% block page_actions %}{% endblock %}
+        </div>
+        {% block admin_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

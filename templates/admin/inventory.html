@@ -1,0 +1,80 @@
+{% extends "admin/_layout.html" %}
+{% from "_macros.html" import art_style %}
+{% block title %}Inventory - Admin{% endblock %}
+{% block page_title %}Inventory <span class="gradient-text">control</span>{% endblock %}
+{% block page_sub %}Adjust stock levels - every change is written to the audit log{% endblock %}
+
+{% block admin_content %}
+<div class="card table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th><th>Category</th><th class="t-right">In stock</th>
+                <th class="t-right">Stock value</th><th style="width:330px">Adjust stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products %}
+                <tr>
+                    <td>
+                        <div class="cell-prod">
+                            <span class="cell-art" style="{{ art_style(p.gradient) }}">{{ p.icon }}</span>
+                            <div>
+                                <div style="font-weight:600">{{ p.name }}</div>
+                                <div style="font-size:.76rem;color:var(--muted)">{{ p.sku }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-size:.85rem;color:var(--muted)">{{ p.category_name }}</td>
+                    <td class="t-right">
+                        {% if p.stock == 0 %}<span class="tag tag-err">Out of stock</span>
+                        {% elif p.stock <= 10 %}<span class="tag tag-warn">{{ p.stock }} left</span>
+                        {% else %}<span class="tag tag-ok">{{ p.stock }}</span>{% endif %}
+                    </td>
+                    <td class="t-right">{{ CURRENCY }}{{ (p.stock * p.price) | money }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('admin.inventory_adjust', product_id=p.id) }}"
+                              style="display:flex;gap:.35rem;align-items:center">
+                            <input class="input" name="change" type="number" value="10" style="width:78px" required>
+                            <input class="input" name="reason" placeholder="Reason" style="flex:1;min-width:90px">
+                            <button class="btn btn-mint btn-sm" type="submit">Apply</button>
+                        </form>
+                        <div style="font-size:.73rem;color:var(--muted);margin-top:.25rem">
+                            Use a negative number to remove damaged or returned units.
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top:1.4rem">
+    <h3 style="padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);font-size:1.05rem">
+        &#128220; Stock movement log (latest 40)
+    </h3>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>When</th><th>Product</th><th class="t-right">Change</th>
+                       <th class="t-right">Balance</th><th>Reason</th></tr></thead>
+            <tbody>
+                {% for l in logs %}
+                    <tr>
+                        <td style="font-size:.8rem;color:var(--muted);white-space:nowrap">{{ l.created_at[:16] }}</td>
+                        <td style="font-size:.88rem">{{ l.icon }} {{ l.product_name }}</td>
+                        <td class="t-right">
+                            <strong style="color:{{ 'var(--ok)' if l.change >= 0 else 'var(--err)' }}">
+                                {{ '+' if l.change >= 0 }}{{ l.change }}
+                            </strong>
+                        </td>
+                        <td class="t-right">{{ l.balance }}</td>
+                        <td style="font-size:.85rem;color:var(--text-soft)">{{ l.reason }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">No stock movements yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
