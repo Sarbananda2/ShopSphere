@@ -205,9 +205,24 @@ class LibSQLConnectionWrapper:
 def get_db():
     """Return a request-scoped database connection (local SQLite or Turso libSQL)."""
     if "db" not in g:
-        turso_url = os.environ.get("TURSO_DATABASE_URL")
-        turso_token = os.environ.get("TURSO_AUTH_TOKEN", "")
-        if turso_url:
+        # Automated tests always run against isolated local SQLite
+        if current_app.config.get("TESTING"):
+            path = current_app.config["DATABASE"]
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            g.db = sqlite3.connect(path)
+            g.db.row_factory = sqlite3.Row
+            g.db.execute("PRAGMA foreign_keys = ON")
+            return g.db
+
+        turso_url = os.environ.get(
+            "TURSO_DATABASE_URL",
+            "libsql://shopsphere-sarbanandataw.aws-ap-south-1.turso.io"
+        )
+        turso_token = os.environ.get(
+            "TURSO_AUTH_TOKEN",
+            "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTI2OTg4MjcsImlkIjoiMDFhMTY1MjktMTIwMS03MDZmLWJkYmUtMjc3Y2NjODY0OWRkIiwia2lkIjoiWDhyTVVLZG9DaEVFa21yQjdHa1RhaUhyZHJlejZSaFRXSnJ6Tk53b0lzRSIsInJpZCI6IjQ4MmY0MzJmLWU0ZWYtNDQwZS05MWU3LWM1NDBkMmRkZDBlYSJ9.ZYdQIPNClZpta5tNfHcKIOmbIItLxiWbYwk1RipkutRPwivuc7gvtBkf3Aey8SNRs_833j4wRT55ba5vvzMsBQ"
+        )
+        if turso_url and turso_token:
             import libsql_experimental as libsql
             raw_conn = libsql.connect(turso_url, auth_token=turso_token)
             g.db = LibSQLConnectionWrapper(raw_conn)
