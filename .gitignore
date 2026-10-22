@@ -23,3 +23,5 @@ npm-debug.log*
 
 # Archives & Backups
 archive/
+.vercel
+.env*
