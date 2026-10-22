@@ -127,14 +127,104 @@ MIGRATIONS = (
 )
 
 
+class DictRow(dict):
+    """Row wrapper allowing access by column name (row['col']) and numeric index (row[0])."""
+    def __init__(self, cols, values):
+        super().__init__(zip(cols, values))
+        self._values = tuple(values)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._values[key]
+        return super().__getitem__(key)
+
+
+class LibSQLCursorWrapper:
+    """Cursor wrapper that normalises libSQL tuple rows into DictRow objects."""
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+    @property
+    def lastrowid(self):
+        return self._cursor.lastrowid
+
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
+
+    @property
+    def description(self):
+        return self._cursor.description
+
+    def fetchone(self):
+        row = self._cursor.fetchone()
+        if row is None:
+            return None
+        cols = [c[0] for c in self._cursor.description] if self._cursor.description else []
+        return DictRow(cols, row)
+
+    def fetchall(self):
+        raw = self._cursor.fetchall()
+        cols = [c[0] for c in self._cursor.description] if self._cursor.description else []
+        return [DictRow(cols, r) for r in raw]
+
+    def fetchmany(self, size=None):
+        raw = self._cursor.fetchmany(size) if size else self._cursor.fetchmany()
+        cols = [c[0] for c in self._cursor.description] if self._cursor.description else []
+        return [DictRow(cols, r) for r in raw]
+
+    def close(self):
+        self._cursor.close()
+
+
+class LibSQLConnectionWrapper:
+    """Connection wrapper providing sqlite3-compatible interface for libSQL."""
+    def __init__(self, conn):
+        self._conn = conn
+
+    def execute(self, sql, args=()):
+        cur = self._conn.execute(sql, args)
+        return LibSQLCursorWrapper(cur)
+
+    def executescript(self, sql):
+        return self._conn.executescript(sql)
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
+
 def get_db():
-    """Return a request-scoped SQLite connection with row access by column name."""
+    """Return a request-scoped database connection (local SQLite or Turso libSQL)."""
     if "db" not in g:
-        path = current_app.config["DATABASE"]
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        g.db = sqlite3.connect(path)
-        g.db.row_factory = sqlite3.Row
-        g.db.execute("PRAGMA foreign_keys = ON")
+        turso_url = os.environ.get("TURSO_DATABASE_URL")
+        turso_token = os.environ.get("TURSO_AUTH_TOKEN", "")
+        if turso_url:
+            import libsql_experimental as libsql
+            raw_conn = libsql.connect(turso_url, auth_token=turso_token)
+            g.db = LibSQLConnectionWrapper(raw_conn)
+            g.db.execute("PRAGMA foreign_keys = ON")
+        else:
+            path = current_app.config["DATABASE"]
+            # In Vercel serverless functions, root is read-only; fall back to /tmp if needed
+            if os.environ.get("VERCEL") and not path.startswith("/tmp"):
+                import shutil
+                tmp_path = "/tmp/shopsphere.db"
+                if not os.path.exists(tmp_path) and os.path.exists(path):
+                    shutil.copy2(path, tmp_path)
+                path = tmp_path
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            g.db = sqlite3.connect(path)
+            g.db.row_factory = sqlite3.Row
+            g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
 
 
@@ -173,7 +263,7 @@ def init_db(seed=True):
     for ddl in MIGRATIONS:
         try:
             db.execute(ddl)
-        except sqlite3.OperationalError:
+        except (sqlite3.OperationalError, Exception):
             pass  # column already present
     db.commit()
     if seed:
