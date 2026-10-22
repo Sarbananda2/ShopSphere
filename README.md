@@ -5,7 +5,7 @@
 A complete, colourful and fully responsive online store with customer accounts, a product
 catalogue, inventory control, a shopping cart, a simulated payment gateway (card / UPI /
 net-banking / cash-on-delivery) and an admin back-office — plus an automated test suite of
-**69 tests**.
+**71 tests**.
 
 ---
 
@@ -143,10 +143,11 @@ gateway reference, masked instrument and a human-readable message.
 | Database | SQLite 3 (`sqlite3` module, parameterised queries) |
 | Security | `werkzeug.security` PBKDF2 password hashing, server-side sessions |
 | Frontend | HTML5, CSS3 (Grid, Flexbox, custom properties), vanilla JavaScript (Fetch API) |
-| Testing | `unittest` + Flask test client (69 tests) |
+| Testing | `unittest` + Flask test client (71 tests) |
 
-No front-end framework, no CDN and no image files — the app runs **completely offline**.
-Product artwork is drawn with CSS gradients and emoji.
+No front-end framework and no image files in the repo. Products and categories show studio
+photos hot-linked from [Unsplash](https://unsplash.com); when they cannot load (e.g. offline)
+each tile falls back to CSS-gradient + emoji artwork, so the app still runs **completely offline**.
 
 ---
 
@@ -190,7 +191,7 @@ Integrated project MCA/
 │             cart.js (live cart + coupons)
 │             payment.js (card preview, Luhn, OTP boxes)
 │
-├── tests/test_shopsphere.py   69 automated tests
+├── tests/test_shopsphere.py   71 automated tests
 └── instance/shopsphere.db     SQLite database (created automatically)
 ```
 
@@ -268,10 +269,10 @@ every single test, so tests never touch your demo data and can run in any order.
 | `TestCart` | 10 | Add/update/remove, quantity merge, stock limits, GST, free shipping, coupons |
 | `TestGatewayUnit` | 12 | Luhn, network detection, expiry, CVV, UPI, bank, OTP, capture rules |
 | `TestCheckoutAndPayment` | 17 | Order creation, card/UPI/net-banking/COD, declines, OTP lockout, stock movement, refunds, access control |
-| `TestAdmin` | 13 | Admin authorisation, product CRUD, SKU and price rules, soft delete, inventory log, order workflow |
-| **Total** | **69** | all passing |
+| `TestAdmin` | 15 | Admin authorisation, product CRUD, SKU, price and photo-URL rules, soft delete, inventory log, order workflow |
+| **Total** | **71** | all passing |
 
-Last run: `Ran 69 tests — OK`.
+Last run: `Ran 71 tests — OK`.
 
 ---
 

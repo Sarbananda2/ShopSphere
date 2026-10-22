@@ -1,13 +1,14 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
 {% block title %}Payment - {{ STORE_NAME }}{% endblock %}
 {% block catbar %}{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top:1.2rem">
+<div class="container page-pad">
 
     <div class="steps">
-        <div class="step done"><i>&#10003;</i><span>Cart</span></div><div class="step-line"></div>
-        <div class="step done"><i>&#10003;</i><span>Address</span></div><div class="step-line"></div>
+        <div class="step done"><i>{{ icon('check', 14) }}</i><span>Cart</span></div><div class="step-line"></div>
+        <div class="step done"><i>{{ icon('check', 14) }}</i><span>Address</span></div><div class="step-line"></div>
         <div class="step active"><i>3</i><span>Payment</span></div><div class="step-line"></div>
         <div class="step"><i>4</i><span>Done</span></div>
     </div>
@@ -18,150 +19,154 @@
 
             <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
                 <h2 style="font-size:1.25rem">Choose a payment method</h2>
-                <span class="tag tag-info">&#128274; {{ GATEWAY_NAME }} secure checkout</span>
+                <span class="tag tag-ok">{{ icon('shield', 13) }} {{ GATEWAY_NAME }} secure checkout</span>
             </div>
-            <p style="color:var(--muted);font-size:.86rem;margin:.3rem 0 1.2rem">
+            <p style="color:var(--muted);font-size:.86rem;margin:.3rem 0 1.25rem">
                 Order {{ order.order_number }} &middot; Amount payable
                 <strong style="color:var(--text)">{{ CURRENCY }}{{ order.total | money }}</strong>
             </p>
 
-            <div class="method-list">
-                <!-- ------------------------------------------------ CARD -->
+            <div class="method-list" role="radiogroup" aria-label="Payment method">
                 <label class="method selected" data-method="CARD">
-                    <input type="radio" name="method" value="CARD" checked>
-                    <span class="m-icon">&#128179;</span>
+                    <span class="m-icon">{{ icon('card', 20) }}</span>
                     <span>
                         <strong>Credit / Debit card</strong>
                         <small>Visa, Mastercard, RuPay, Amex &middot; OTP verified</small>
                     </span>
+                    <input type="radio" name="method" value="CARD" checked>
                 </label>
-                <div class="method-body show" data-body="CARD">
-                    <div class="card-preview" style="margin-bottom:1.1rem">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-                            <div class="card-chip"></div>
-                            <strong id="netLabel" style="letter-spacing:.1em;font-size:.9rem">CARD</strong>
-                        </div>
-                        <div class="card-number" id="cardNumPreview">&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;</div>
-                        <div class="card-foot">
-                            <div><span>Card holder</span><strong id="cardNamePreview">YOUR NAME</strong></div>
-                            <div><span>Expires</span><strong id="cardExpPreview">MM/YY</strong></div>
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label for="card_number">Card number</label>
-                        <input class="input" id="card_number" name="card_number" inputmode="numeric"
-                               maxlength="23" placeholder="4111 1111 1111 1111" autocomplete="off">
-                        <div class="hint" id="cardHint">Test card: 4111 1111 1111 1111 (any future expiry, any CVV)</div>
-                    </div>
-                    <div class="field">
-                        <label for="card_name">Name on card</label>
-                        <input class="input" id="card_name" name="card_name" placeholder="As printed on the card"
-                               value="{{ user.name|upper }}" autocomplete="off">
-                    </div>
-                    <div class="row-3">
-                        <div class="field">
-                            <label for="expiry_month">Month</label>
-                            <select id="expiry_month" name="expiry_month">
-                                {% for m in range(1, 13) %}
-                                    <option value="{{ '%02d'|format(m) }}">{{ '%02d'|format(m) }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label for="expiry_year">Year</label>
-                            <select id="expiry_year" name="expiry_year">
-                                {% for y in range(2026, 2037) %}
-                                    <option value="{{ y }}">{{ y }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label for="cvv">CVV</label>
-                            <input class="input" id="cvv" name="cvv" maxlength="4" inputmode="numeric"
-                                   placeholder="123" autocomplete="off">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ------------------------------------------------- UPI -->
                 <label class="method" data-method="UPI">
-                    <input type="radio" name="method" value="UPI">
-                    <span class="m-icon">&#128241;</span>
+                    <span class="m-icon">{{ icon('phone', 20) }}</span>
                     <span>
                         <strong>UPI</strong>
                         <small>Pay with any UPI app using your VPA</small>
                     </span>
+                    <input type="radio" name="method" value="UPI">
                 </label>
-                <div class="method-body" data-body="UPI">
-                    <div class="field">
-                        <label for="upi_id">UPI ID</label>
-                        <input class="input" id="upi_id" name="upi_id" placeholder="yourname@okhdfcbank" autocomplete="off">
-                        <div class="hint">Test VPA: <strong>student@okaxis</strong> &middot; use <strong>fail@upi</strong> to see a declined payment.</div>
-                    </div>
-                    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-                        {% for app in ['@okaxis', '@okhdfcbank', '@ybl', '@paytm'] %}
-                            <button type="button" class="btn btn-ghost btn-sm upi-suffix" data-suffix="{{ app }}">{{ app }}</button>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- ------------------------------------------ NET BANKING -->
                 <label class="method" data-method="NETBANKING">
-                    <input type="radio" name="method" value="NETBANKING">
-                    <span class="m-icon">&#127974;</span>
+                    <span class="m-icon">{{ icon('bank', 20) }}</span>
                     <span>
                         <strong>Net banking</strong>
                         <small>All major Indian banks supported</small>
                     </span>
+                    <input type="radio" name="method" value="NETBANKING">
                 </label>
-                <div class="method-body" data-body="NETBANKING">
-                    <div class="field">
-                        <label for="bank_code">Select your bank</label>
-                        <select id="bank_code" name="bank_code">
-                            <option value="">-- Choose a bank --</option>
-                            {% for code, bank in banks.items() %}
-                                <option value="{{ code }}">{{ bank }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <!-- ------------------------------------------------- COD -->
                 <label class="method" data-method="COD">
-                    <input type="radio" name="method" value="COD">
-                    <span class="m-icon">&#128176;</span>
+                    <span class="m-icon">{{ icon('cash', 20) }}</span>
                     <span>
                         <strong>Cash on delivery</strong>
                         <small>Pay the courier when the parcel arrives</small>
                     </span>
+                    <input type="radio" name="method" value="COD">
                 </label>
-                <div class="method-body" data-body="COD">
-                    <p style="font-size:.88rem;color:var(--text-soft)">
-                        Keep {{ CURRENCY }}{{ order.total | money }} ready at the time of delivery.
-                        Cash on delivery is unavailable for orders above {{ CURRENCY }}20,000.
-                    </p>
+            </div>
+
+            <!-- ------------------------------------------------ CARD -->
+            <div class="method-body show" data-body="CARD">
+                <div class="card-preview" style="margin-bottom:1.25rem">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                        <div class="card-chip"></div>
+                        <strong id="netLabel" style="letter-spacing:.1em;font-size:.9rem">CARD</strong>
+                    </div>
+                    <div class="card-number" id="cardNumPreview">&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;</div>
+                    <div class="card-foot">
+                        <div><span>Card holder</span><strong id="cardNamePreview">YOUR NAME</strong></div>
+                        <div><span>Expires</span><strong id="cardExpPreview">MM/YY</strong></div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="card_number">Card number</label>
+                    <input class="input" id="card_number" name="card_number" inputmode="numeric"
+                           maxlength="23" placeholder="4111 1111 1111 1111" autocomplete="off">
+                    <div class="hint" id="cardHint">Test card: 4111 1111 1111 1111 (any future expiry, any CVV)</div>
+                </div>
+                <div class="field">
+                    <label for="card_name">Name on card</label>
+                    <input class="input" id="card_name" name="card_name" placeholder="As printed on the card"
+                           value="{{ user.name|upper }}" autocomplete="off">
+                </div>
+                <div class="row-3">
+                    <div class="field">
+                        <label for="expiry_month">Month</label>
+                        <select id="expiry_month" name="expiry_month">
+                            {% for m in range(1, 13) %}
+                                <option value="{{ '%02d'|format(m) }}">{{ '%02d'|format(m) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="expiry_year">Year</label>
+                        <select id="expiry_year" name="expiry_year">
+                            {% for y in range(2026, 2037) %}
+                                <option value="{{ y }}">{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="cvv">CVV</label>
+                        <input class="input" id="cvv" name="cvv" maxlength="4" inputmode="numeric"
+                               placeholder="123" autocomplete="off">
+                    </div>
                 </div>
             </div>
 
-            <button class="btn btn-primary btn-block" style="margin-top:1.3rem" type="submit" id="payBtn">
-                &#128274; Pay {{ CURRENCY }}{{ order.total | money }}
+            <!-- ------------------------------------------------- UPI -->
+            <div class="method-body" data-body="UPI">
+                <div class="method-body-title">{{ icon('phone', 17) }} Pay with UPI</div>
+                <div class="field">
+                    <label for="upi_id">UPI ID</label>
+                    <input class="input" id="upi_id" name="upi_id" placeholder="yourname@okhdfcbank" autocomplete="off">
+                    <div class="hint">Test VPA: <strong>student@okaxis</strong> &middot; use <strong>fail@upi</strong> to see a declined payment.</div>
+                </div>
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                    {% for app in ['@okaxis', '@okhdfcbank', '@ybl', '@paytm'] %}
+                        <button type="button" class="btn btn-outline btn-sm upi-suffix" data-suffix="{{ app }}">{{ app }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ------------------------------------------ NET BANKING -->
+            <div class="method-body" data-body="NETBANKING">
+                <div class="method-body-title">{{ icon('bank', 17) }} Pay with net banking</div>
+                <div class="field" style="margin-bottom:0">
+                    <label for="bank_code">Select your bank</label>
+                    <select id="bank_code" name="bank_code">
+                        <option value="">-- Choose a bank --</option>
+                        {% for code, bank in banks.items() %}
+                            <option value="{{ code }}">{{ bank }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- ------------------------------------------------- COD -->
+            <div class="method-body" data-body="COD">
+                <div class="method-body-title">{{ icon('cash', 17) }} Cash on delivery</div>
+                <p style="font-size:.88rem;color:var(--text-soft)">
+                    Keep {{ CURRENCY }}{{ order.total | money }} ready at the time of delivery.
+                    Cash on delivery is unavailable for orders above {{ CURRENCY }}20,000.
+                </p>
+            </div>
+
+            <button class="btn btn-primary btn-block btn-lg" style="margin-top:1.4rem" type="submit" id="payBtn">
+                {{ icon('lock', 17) }} Pay {{ CURRENCY }}{{ order.total | money }}
             </button>
             <a class="btn btn-ghost btn-block btn-sm" style="margin-top:.6rem"
                href="{{ url_for('orders.order_detail', order_id=order.id) }}">Pay later &middot; view order</a>
         </form>
 
-        <div class="card card-pad summary">
-            <h3 style="margin-bottom:.9rem">Order {{ order.order_number }}</h3>
-            <div style="display:grid;gap:.6rem;margin-bottom:1rem">
+        <aside class="card card-pad summary">
+            <h3 class="summary-title">Order {{ order.order_number }}</h3>
+            <div class="mini-items" style="margin-bottom:1.1rem">
                 {% for i in items %}
-                    <div style="display:flex;gap:.6rem;align-items:center">
-                        <span style="font-size:1.3rem">{{ i.icon }}</span>
-                        <div style="flex:1;min-width:0">
-                            <div style="font-size:.86rem;font-weight:600">{{ i.product_name }}</div>
-                            <div style="font-size:.76rem;color:var(--muted)">Qty {{ i.quantity }}</div>
+                    <div class="mini-item">
+                        <span class="cell-art" style="background:var(--surface-2)">{{ i.icon }}</span>
+                        <div>
+                            <div class="name">{{ i.product_name }}</div>
+                            <div class="meta">Qty {{ i.quantity }}</div>
                         </div>
-                        <strong style="font-size:.86rem">{{ CURRENCY }}{{ i.line_total | money }}</strong>
+                        <strong>{{ CURRENCY }}{{ i.line_total | money }}</strong>
                     </div>
                 {% endfor %}
             </div>
@@ -169,7 +174,7 @@
             <div class="summary-row"><span>Subtotal</span><span>{{ CURRENCY }}{{ order.subtotal | money }}</span></div>
             {% if order.discount %}
                 <div class="summary-row">
-                    <span>Coupon {{ order.coupon_code }}</span>
+                    <span>Coupon <span class="tag tag-info" style="margin-left:.2rem">{{ order.coupon_code }}</span></span>
                     <span style="color:var(--ok)">&minus; {{ CURRENCY }}{{ order.discount | money }}</span>
                 </div>
             {% endif %}
@@ -180,12 +185,13 @@
             </div>
             <div class="summary-row total"><span>Payable</span><span>{{ CURRENCY }}{{ order.total | money }}</span></div>
 
-            <div style="margin-top:1rem;font-size:.8rem;color:var(--muted);line-height:1.5">
-                <strong style="color:var(--text)">Deliver to</strong><br>
+            <div class="note" style="background:var(--surface-2)">
+                {{ icon('truck', 16) }}
+                <span><strong style="color:var(--text)">Deliver to</strong><br>
                 {{ order.shipping_name }}, {{ order.shipping_phone }}<br>
-                {{ order.shipping_address }}
+                {{ order.shipping_address }}</span>
             </div>
-        </div>
+        </aside>
     </div>
 </div>
 {% endblock %}

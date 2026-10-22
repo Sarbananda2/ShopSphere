@@ -45,14 +45,14 @@
             </form>
 
             <div class="demo-box">
-                <strong>Demo accounts for evaluation</strong><br>
+                <strong>Quick Demo Access (1-Click Login)</strong><br>
                 Customer: <code>user@shopsphere.com</code> / <code>User@123</code><br>
                 Admin: <code>admin@shopsphere.com</code> / <code>Admin@123</code>
                 <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
                     <button class="btn btn-ghost btn-sm" type="button"
-                            onclick="fillLogin('user@shopsphere.com','User@123')">Fill customer</button>
+                            onclick="quickLogin('user@shopsphere.com','User@123')">Sign in as customer</button>
                     <button class="btn btn-ghost btn-sm" type="button"
-                            onclick="fillLogin('admin@shopsphere.com','Admin@123')">Fill admin</button>
+                            onclick="quickLogin('admin@shopsphere.com','Admin@123')">Sign in as admin</button>
                 </div>
             </div>
         </div>
@@ -62,9 +62,11 @@
 
 {% block scripts %}
 <script>
-    function fillLogin(email, password) {
-        document.getElementById('email').value = email;
+    function quickLogin(email, password) {
+        const field = document.getElementById('email');
+        field.value = email;
         document.getElementById('password').value = password;
+        field.form.requestSubmit();
     }
 </script>
 {% endblock %}

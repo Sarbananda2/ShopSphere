@@ -1,84 +1,94 @@
 {% extends "base.html" %}
-{% from "_macros.html" import art_style %}
+{% from "_macros.html" import art_style, art_img, icon %}
 {% block title %}Checkout - {{ STORE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top:1.2rem">
+<div class="container page-pad">
 
     <div class="steps">
-        <div class="step done"><i>&#10003;</i><span>Cart</span></div><div class="step-line"></div>
+        <div class="step done"><i>{{ icon('check', 14) }}</i><span>Cart</span></div><div class="step-line"></div>
         <div class="step active"><i>2</i><span>Address</span></div><div class="step-line"></div>
         <div class="step"><i>3</i><span>Payment</span></div><div class="step-line"></div>
         <div class="step"><i>4</i><span>Done</span></div>
     </div>
 
     {% if issues %}
-        <div class="card card-pad" style="border-left:5px solid var(--err);margin-bottom:1.2rem">
-            <strong>Some items need attention before you can continue</strong>
-            <ul style="margin-top:.5rem;color:var(--text-soft);font-size:.9rem">
-                {% for i in issues %}<li>&bull; {{ i }}</li>{% endfor %}
-            </ul>
-            <a class="btn btn-outline btn-sm" style="margin-top:.8rem" href="{{ url_for('cart.view_cart') }}">Fix in cart</a>
+        <div class="card card-pad" style="border-left:4px solid var(--err);margin-bottom:1.25rem;display:flex;gap:.9rem;align-items:flex-start">
+            <span class="panel-icon" style="background:var(--err-bg);color:var(--err)">{{ icon('alert', 17) }}</span>
+            <div>
+                <strong>Some items need attention before you can continue</strong>
+                <ul style="margin-top:.5rem;color:var(--text-soft);font-size:.9rem">
+                    {% for i in issues %}<li>&bull; {{ i }}</li>{% endfor %}
+                </ul>
+                <a class="btn btn-outline btn-sm" style="margin-top:.8rem" href="{{ url_for('cart.view_cart') }}">Fix in cart</a>
+            </div>
         </div>
     {% endif %}
 
     <div class="cart-layout">
-        <form method="post" class="card card-pad" novalidate>
-            <h2 style="font-size:1.25rem;margin-bottom:1rem">Delivery address</h2>
-
-            <div class="row-2">
-                <div class="field">
-                    <label for="shipping_name">Full name *</label>
-                    <input class="input" id="shipping_name" name="shipping_name" required
-                           value="{{ form.get('shipping_name') or user.name }}">
-                </div>
-                <div class="field">
-                    <label for="shipping_phone">Mobile number *</label>
-                    <input class="input" id="shipping_phone" name="shipping_phone" required
-                           maxlength="10" inputmode="numeric" pattern="\d{10}"
-                           value="{{ form.get('shipping_phone') or user.phone or '' }}">
-                    <div class="hint">10 digits - used by the courier for delivery updates.</div>
-                </div>
+        <form method="post" class="card" novalidate>
+            <div class="card-head">
+                <h2><span class="panel-icon brand">{{ icon('truck', 16) }}</span> Delivery address</h2>
             </div>
 
-            <div class="field">
-                <label for="shipping_address">Complete address *</label>
-                <textarea class="input" id="shipping_address" name="shipping_address" required
-                          style="min-height:118px"
-                          placeholder="House / flat no., street, landmark, city, state, PIN code">{{ form.get('shipping_address') or user.address or '' }}</textarea>
-            </div>
+            <div class="card-pad">
+                <div class="row-2">
+                    <div class="field">
+                        <label for="shipping_name">Full name *</label>
+                        <input class="input" id="shipping_name" name="shipping_name" required
+                               value="{{ form.get('shipping_name') or user.name }}" autocomplete="name">
+                    </div>
+                    <div class="field">
+                        <label for="shipping_phone">Mobile number *</label>
+                        <input class="input" id="shipping_phone" name="shipping_phone" required
+                               maxlength="10" inputmode="numeric" pattern="\d{10}" autocomplete="tel"
+                               value="{{ form.get('shipping_phone') or user.phone or '' }}">
+                        <div class="hint">10 digits - used by the courier for delivery updates.</div>
+                    </div>
+                </div>
 
-            <div class="card card-pad" style="background:var(--surface-2);border:0;margin-bottom:1.1rem">
-                <strong style="font-size:.9rem">&#128230; Items in this order ({{ rows|length }})</strong>
-                <div style="display:grid;gap:.6rem;margin-top:.8rem">
-                    {% for r in rows %}
-                        <div style="display:flex;gap:.7rem;align-items:center">
-                            <span class="cell-art" style="{{ art_style(r.gradient) }}">{{ r.icon }}</span>
-                            <div style="flex:1;min-width:0">
-                                <div style="font-size:.88rem;font-weight:600">{{ r.name }}</div>
-                                <div style="font-size:.78rem;color:var(--muted)">Qty {{ r.quantity }} &times; {{ CURRENCY }}{{ r.price | money }}</div>
+                <div class="field">
+                    <label for="shipping_address">Complete address *</label>
+                    <textarea class="input" id="shipping_address" name="shipping_address" required
+                              style="min-height:118px" autocomplete="street-address"
+                              placeholder="House / flat no., street, landmark, city, state, PIN code">{{ form.get('shipping_address') or user.address or '' }}</textarea>
+                </div>
+
+                <div style="padding:1rem 1.1rem;border-radius:var(--r);background:var(--surface-2);border:1px solid var(--line);margin-bottom:1.25rem">
+                    <strong style="font-size:.88rem;display:flex;align-items:center;gap:.45rem">
+                        {{ icon('package', 16) }} Items in this order ({{ rows|length }})
+                    </strong>
+                    <div class="mini-items" style="margin-top:.9rem">
+                        {% for r in rows %}
+                            <div class="mini-item">
+                                <span class="cell-art{{ ' has-img' if r.image_url }}" style="{{ art_style(r.gradient) }}">{{ art_img(r, 'thumb-img') }}</span>
+                                <div>
+                                    <div class="name">{{ r.name }}</div>
+                                    <div class="meta">Qty {{ r.quantity }} &times; {{ CURRENCY }}{{ r.price | money }}</div>
+                                </div>
+                                <strong>{{ CURRENCY }}{{ r.line_total | money }}</strong>
                             </div>
-                            <strong style="font-size:.9rem">{{ CURRENCY }}{{ r.line_total | money }}</strong>
-                        </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
-            </div>
 
-            <button class="btn btn-primary btn-block" type="submit" {{ 'disabled' if issues }}>
-                Continue to payment &rarr;
-            </button>
-            <a class="btn btn-ghost btn-block btn-sm" style="margin-top:.6rem"
-               href="{{ url_for('cart.view_cart') }}">&larr; Back to cart</a>
+                <button class="btn btn-primary btn-block btn-lg" type="submit" {{ 'disabled' if issues }}>
+                    Continue to payment {{ icon('arrow-right', 18) }}
+                </button>
+                <a class="btn btn-ghost btn-block btn-sm" style="margin-top:.6rem"
+                   href="{{ url_for('cart.view_cart') }}">{{ icon('arrow-left', 15) }} Back to cart</a>
+            </div>
         </form>
 
-        <div class="card card-pad summary">
-            <h3 style="margin-bottom:.8rem">Order summary</h3>
+        <aside class="card card-pad summary">
+            <h3 class="summary-title">Order summary</h3>
             {% include "_summary.html" %}
-            <div style="margin-top:1rem;padding:.8rem;border-radius:var(--r-sm);background:var(--brand-soft);font-size:.82rem">
-                &#128274; Your payment is processed by <strong>{{ GATEWAY_NAME }}</strong> (simulated gateway).
-                No real card is ever charged in this project.
+            <div class="note">
+                {{ icon('lock', 16) }}
+                <span>Your payment is processed by <strong>{{ GATEWAY_NAME }}</strong> (simulated gateway).
+                No real card is ever charged in this project.</span>
             </div>
-        </div>
+        </aside>
     </div>
 </div>
 {% endblock %}

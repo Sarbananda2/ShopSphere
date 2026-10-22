@@ -27,8 +27,8 @@
                         <div style="font-size:.75rem;color:var(--muted);max-width:240px">{{ c.address or 'No address saved' }}</div>
                     </td>
                     <td>
-                        {% if c.role == 'admin' %}<span class="tag tag-info">Admin</span>
-                        {% else %}<span class="tag tag-muted">Customer</span>{% endif %}
+                        {% if c.role == 'admin' %}<span class="tag tag-dot tag-info">Admin</span>
+                        {% else %}<span class="tag tag-dot tag-muted">Customer</span>{% endif %}
                     </td>
                     <td class="t-right">{{ c.order_count }}</td>
                     <td class="t-right"><strong>{{ CURRENCY }}{{ c.spent | money }}</strong></td>

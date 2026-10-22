@@ -11,8 +11,12 @@
     document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('themeBtn');
         if (!btn) return;
-        const paint = () =>
-            btn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+        // The sun / moon SVGs are swapped by CSS; only the accessible label changes here.
+        const paint = () => {
+            const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            btn.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
+            btn.setAttribute('aria-label', btn.title);
+        };
         paint();
         btn.addEventListener('click', () => {
             const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -97,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', async () => {
             const qtyEl = btn.dataset.qtyFrom ? document.getElementById(btn.dataset.qtyFrom) : null;
             const quantity = qtyEl ? parseInt(qtyEl.textContent, 10) : 1;
-            const label = btn.textContent;
+            const label = btn.innerHTML;     // keeps the inline SVG icon
 
             btn.disabled = true;
             btn.textContent = 'Adding...';
@@ -113,13 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             btn.disabled = false;
-            btn.textContent = label;
+            btn.innerHTML = label;
 
             if (data.ok) {
                 setCartBadge(data.count);
                 toast(data.message, 'success');
                 btn.textContent = '✓ Added';
-                setTimeout(() => { btn.textContent = label; }, 1400);
+                setTimeout(() => { btn.innerHTML = label; }, 1400);
             } else {
                 toast(data.message || 'Could not add this item', 'danger');
             }

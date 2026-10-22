@@ -47,7 +47,7 @@ def cart_rows(user_id):
     """Cart lines joined with live product data."""
     return query(
         "SELECT c.id AS cart_id, c.quantity, p.id, p.name, p.price, p.mrp, p.stock,"
-        "       p.icon, p.gradient, p.sku,"
+        "       p.icon, p.gradient, p.image_url, p.sku,"
         "       (c.quantity * p.price) AS line_total"
         "  FROM cart_items c JOIN products p ON p.id = c.product_id"
         " WHERE c.user_id = ? ORDER BY c.id",

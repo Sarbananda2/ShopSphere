@@ -22,8 +22,9 @@ CREATE TABLE IF NOT EXISTS categories (
     id    INTEGER PRIMARY KEY AUTOINCREMENT,
     name  TEXT NOT NULL UNIQUE,
     slug  TEXT NOT NULL UNIQUE,
-    icon  TEXT NOT NULL DEFAULT 'box',
-    color TEXT NOT NULL DEFAULT '#6366f1'
+    icon      TEXT NOT NULL DEFAULT 'box',
+    color     TEXT NOT NULL DEFAULT '#6366f1',
+    image_url TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS products (
@@ -37,6 +38,7 @@ CREATE TABLE IF NOT EXISTS products (
     stock       INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
     icon        TEXT    NOT NULL DEFAULT 'box',
     gradient    TEXT    NOT NULL DEFAULT '#6366f1,#8b5cf6',
+    image_url   TEXT    NOT NULL DEFAULT '',
     rating      REAL    NOT NULL DEFAULT 4.0,
     is_active   INTEGER NOT NULL DEFAULT 1,
     created_at  TEXT    NOT NULL
@@ -116,6 +118,14 @@ CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items (order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_order    ON payments (order_id);
 """
 
+# Columns added after the first release. CREATE TABLE IF NOT EXISTS leaves an
+# older database file untouched, so init_db() adds these in place; SQLite
+# raises OperationalError ("duplicate column") when one is already there.
+MIGRATIONS = (
+    "ALTER TABLE products ADD COLUMN image_url TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE categories ADD COLUMN image_url TEXT NOT NULL DEFAULT ''",
+)
+
 
 def get_db():
     """Return a request-scoped SQLite connection with row access by column name."""
@@ -160,6 +170,11 @@ def init_db(seed=True):
     """Create every table and (optionally) load the demo catalogue."""
     db = get_db()
     db.executescript(SCHEMA)
+    for ddl in MIGRATIONS:
+        try:
+            db.execute(ddl)
+        except sqlite3.OperationalError:
+            pass  # column already present
     db.commit()
     if seed:
         seed_db()
@@ -202,8 +217,9 @@ def seed_db():
 
     for cat in CATEGORIES:
         db.execute(
-            "INSERT OR IGNORE INTO categories (name, slug, icon, color) VALUES (?, ?, ?, ?)",
-            (cat["name"], cat["slug"], cat["icon"], cat["color"]),
+            "INSERT OR IGNORE INTO categories (name, slug, icon, color, image_url)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (cat["name"], cat["slug"], cat["icon"], cat["color"], cat.get("image_url", "")),
         )
 
     slug_to_id = {r["slug"]: r["id"] for r in db.execute("SELECT id, slug FROM categories")}
@@ -212,11 +228,11 @@ def seed_db():
         db.execute(
             "INSERT OR IGNORE INTO products"
             " (name, sku, description, price, mrp, category_id, stock, icon, gradient,"
-            "  rating, is_active, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)",
+            "  image_url, rating, is_active, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)",
             (p["name"], p["sku"], p["description"], p["price"], p["mrp"],
              slug_to_id[p["category"]], p["stock"], p["icon"], p["gradient"],
-             p["rating"], now()),
+             p.get("image_url", ""), p["rating"], now()),
         )
 
     for c in COUPONS:

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import product_card, art_style %}
+{% from "_macros.html" import product_card, art_style, icon %}
 {% block title %}{{ STORE_NAME }} - Shop everything, colourfully{% endblock %}
 
 {% block content %}
@@ -8,15 +8,37 @@
     {% if not search and not active_category %}
     <section class="hero">
         <div class="hero-inner">
-            <span class="tag" style="background:rgba(255,255,255,.2);color:#fff">&#10024; MCA Integrated Project</span>
-            <h1>Shop smarter.<br>Pay securely. Get it fast.</h1>
-            <p>Six categories, {{ products|length }}+ live products, a full inventory system and a
-               simulated {{ GATEWAY_NAME }} payment gateway - all in one Flask application.</p>
-            <div style="display:flex;gap:.7rem;flex-wrap:wrap">
-                <a href="#catalogue" class="btn btn-light">Start shopping</a>
+            <span class="eyebrow">{{ icon('sparkles', 14) }} New Season Arrivals</span>
+            <h1>Shop smarter.<br><span class="gradient-text">Pay securely.</span> Get it fast.</h1>
+            <p>Discover handpicked collections across premium electronics, fashion, and home essentials
+               delivered right to your doorstep.</p>
+            <div class="hero-cta">
+                <a href="#catalogue" class="btn btn-primary btn-lg">Start shopping {{ icon('arrow-right', 18) }}</a>
                 {% if not current_user_name %}
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-sunset">Create free account</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline btn-lg">Create free account</a>
                 {% endif %}
+            </div>
+
+            <ul class="trust">
+                <li>
+                    <span class="trust-icon">{{ icon('truck', 18) }}</span>
+                    <div><strong>Fast delivery</strong><span>Free above {{ CURRENCY }}999</span></div>
+                </li>
+                <li>
+                    <span class="trust-icon">{{ icon('shield', 18) }}</span>
+                    <div><strong>100% secure</strong><span>{{ GATEWAY_NAME }} checkout</span></div>
+                </li>
+                <li>
+                    <span class="trust-icon">{{ icon('returns', 18) }}</span>
+                    <div><strong>Easy returns</strong><span>7-day return window</span></div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="hero-panel" aria-label="Store at a glance">
+            <div class="hero-panel-head">
+                <strong>Store at a glance</strong>
+                <span>Live</span>
             </div>
             <div class="hero-stats">
                 <div><strong>{{ categories|length }}</strong><span>Categories</span></div>
@@ -24,23 +46,24 @@
                 <div><strong>4</strong><span>Payment modes</span></div>
                 <div><strong>24&times;7</strong><span>Support</span></div>
             </div>
+            <div class="hero-panel-foot">{{ icon('lock', 15) }} Card, UPI, net banking &amp; cash on delivery</div>
         </div>
     </section>
 
     <section>
         <div class="section-head">
             <div>
-                <h2>Shop by <span class="gradient-text">category</span></h2>
+                <h2>Shop by category</h2>
                 <p>Hand-picked collections across the store</p>
             </div>
         </div>
         <div class="grid cat-grid">
             {% for c in categories %}
-                <a class="cat-tile" href="{{ url_for('main.index', category=c.slug) }}"
-                   style="background:linear-gradient(135deg,{{ c.color }},{{ c.color }}bb)">
-                    <span class="emoji">{{ c.icon }}</span>
-                    {{ c.name }}
-                    <small>{{ c.product_count }} items</small>
+                <a class="cat-card" href="{{ url_for('main.index', category=c.slug) }}" style="--cat:{{ c.color }}">
+                    {% if c.image_url %}<img class="cat-img" src="{{ c.image_url }}" alt="" loading="lazy" onerror="this.remove()">{% endif %}
+                    <span class="cat-count">{{ c.product_count }} items</span>
+                    <span class="cat-name">{{ c.name }}</span>
+                    <span class="cat-cta">Shop now {{ icon('arrow-right', 14) }}</span>
                 </a>
             {% endfor %}
         </div>
@@ -50,7 +73,7 @@
     <section>
         <div class="section-head">
             <div>
-                <h2>&#128293; Today's <span class="gradient-text">best deals</span></h2>
+                <h2><span class="section-icon">{{ icon('flame', 18) }}</span> Today's best deals</h2>
                 <p>Biggest discounts in the store right now</p>
             </div>
         </div>
@@ -68,9 +91,9 @@
                     {% if search %}Results for "<span class="gradient-text">{{ search }}</span>"
                     {% elif active_category %}
                         {% for c in categories if c.slug == active_category %}
-                            {{ c.icon }} <span class="gradient-text">{{ c.name }}</span>
+                            <span class="section-icon" style="background:{{ c.color }}1f;color:{{ c.color }}">{{ icon('cat-' ~ c.slug, 20) }}</span> {{ c.name }}
                         {% endfor %}
-                    {% else %}All <span class="gradient-text">products</span>{% endif %}
+                    {% else %}All products{% endif %}
                 </h2>
                 <p>{{ products|length }} product{{ '' if products|length == 1 else 's' }} found</p>
             </div>
@@ -80,7 +103,7 @@
                 {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}">{% endif %}
                 {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
                 {% if in_stock %}<input type="hidden" name="in_stock" value="1">{% endif %}
-                <label for="sort" style="font-size:.85rem;color:var(--muted)">Sort</label>
+                <label for="sort" style="font-size:.84rem;color:var(--muted);white-space:nowrap">Sort by</label>
                 <select name="sort" id="sort" style="width:auto" onchange="document.getElementById('sortForm').submit()">
                     <option value="featured"   {{ 'selected' if sort == 'featured' }}>Featured</option>
                     <option value="price_low"  {{ 'selected' if sort == 'price_low' }}>Price: low to high</option>
@@ -101,11 +124,11 @@
                         <h4>Category</h4>
                         <div class="filter-list">
                             <a class="{{ 'active' if not active_category }}"
-                               href="{{ url_for('main.index', q=search, sort=sort) }}">All categories</a>
+                               href="{{ url_for('main.index', q=search, sort=sort) }}"><span>All categories</span></a>
                             {% for c in categories %}
                                 <a class="{{ 'active' if active_category == c.slug }}"
                                    href="{{ url_for('main.index', category=c.slug, q=search, sort=sort) }}">
-                                    <span>{{ c.icon }} {{ c.name }}</span><span>{{ c.product_count }}</span>
+                                    <span>{{ icon('cat-' ~ c.slug, 14) }} {{ c.name }}</span><span>{{ c.product_count }}</span>
                                 </a>
                             {% endfor %}
                         </div>
@@ -117,7 +140,7 @@
                         <input type="range" name="max_price" min="100" max="{{ price_ceiling }}" step="100"
                                value="{{ max_price|int if max_price else price_ceiling }}"
                                oninput="document.getElementById('priceOut').textContent = '{{ CURRENCY }}' + Number(this.value).toLocaleString('en-IN')">
-                        <div style="display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted)">
+                        <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:.3rem">
                             <span>{{ CURRENCY }}100</span>
                             <strong id="priceOut" style="color:var(--indigo)">
                                 {{ CURRENCY }}{{ (max_price|int if max_price else price_ceiling) }}</strong>
@@ -145,7 +168,7 @@
                     </div>
                 {% else %}
                     <div class="card empty">
-                        <div class="emoji">&#128269;</div>
+                        <div class="empty-icon">{{ icon('search', 30) }}</div>
                         <h3>No products matched your search</h3>
                         <p>Try a different keyword, widen the price range or clear the filters.</p>
                         <a href="{{ url_for('main.index') }}" class="btn btn-primary">Browse all products</a>

@@ -1,6 +1,7 @@
 {# Price breakdown - re-rendered by cart.js after every cart change #}
+{% from "_macros.html" import icon %}
 <div class="summary-row">
-    <span>Price ({{ summary.items }} item{{ '' if summary.items == 1 else 's' }})</span>
+    <span>Price ({{ summary['items'] }} item{{ '' if summary['items'] == 1 else 's' }})</span>
     <span>{{ CURRENCY }}{{ summary.mrp_total | money }}</span>
 </div>
 <div class="summary-row">
@@ -9,7 +10,7 @@
 </div>
 {% if summary.coupon %}
     <div class="summary-row">
-        <span>Coupon <strong style="color:var(--indigo)">{{ summary.coupon }}</strong></span>
+        <span>Coupon <span class="tag tag-info" style="margin-left:.2rem">{{ summary.coupon }}</span></span>
         <span style="color:var(--ok)">&minus; {{ CURRENCY }}{{ summary.discount | money }}</span>
     </div>
 {% endif %}
@@ -30,13 +31,13 @@
     <span>{{ CURRENCY }}{{ summary.total | money }}</span>
 </div>
 
-{% if summary.free_shipping_gap > 0 and summary.items %}
-    <div class="save-strip" style="background:rgba(245,158,11,.14);color:#b45309">
-        Add {{ CURRENCY }}{{ summary.free_shipping_gap | money }} more for FREE delivery
+{% if summary.free_shipping_gap > 0 and summary['items'] %}
+    <div class="save-strip warn">
+        {{ icon('truck', 15) }} Add {{ CURRENCY }}{{ summary.free_shipping_gap | money }} more for FREE delivery
     </div>
 {% endif %}
 {% if summary.mrp_total > summary.subtotal or summary.discount %}
     <div class="save-strip">
-        You save {{ CURRENCY }}{{ (summary.mrp_total - summary.subtotal + summary.discount) | money }} on this order
+        {{ icon('sparkles', 15) }} You save {{ CURRENCY }}{{ (summary.mrp_total - summary.subtotal + summary.discount) | money }} on this order
     </div>
 {% endif %}

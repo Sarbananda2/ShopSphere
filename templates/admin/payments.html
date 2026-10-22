@@ -1,5 +1,5 @@
 {% extends "admin/_layout.html" %}
-{% from "_macros.html" import status_tag %}
+{% from "_macros.html" import status_tag, icon %}
 {% block title %}Payments - Admin{% endblock %}
 {% block page_title %}Payment <span class="gradient-text">ledger</span>{% endblock %}
 {% block page_sub %}Every transaction attempted through the {{ GATEWAY_NAME }} gateway{% endblock %}
@@ -7,22 +7,23 @@
 {% block admin_content %}
 <div class="grid stats-grid">
     {% set palette = {'SUCCESS': 's3', 'FAILED': 's2', 'PENDING': 's4', 'REFUNDED': 's5'} %}
+    {% set glyphs = {'SUCCESS': 'check', 'FAILED': 'x', 'PENDING': 'clock', 'REFUNDED': 'returns'} %}
     {% for t in totals %}
         <div class="stat {{ palette.get(t.status, 's1') }}">
-            <div class="label">{{ t.status|title }}</div>
+            <div class="stat-top"><div class="label">{{ t.status|title }}</div><span class="stat-icon">{{ icon(glyphs.get(t.status, 'card'), 19) }}</span></div>
             <div class="value">{{ CURRENCY }}{{ t.amount | money }}</div>
             <div class="sub">{{ t.n }} transaction{{ '' if t.n == 1 else 's' }}</div>
         </div>
     {% else %}
         <div class="stat s1">
-            <div class="label">Transactions</div>
+            <div class="stat-top"><div class="label">Transactions</div><span class="stat-icon">{{ icon('card', 19) }}</span></div>
             <div class="value">0</div>
             <div class="sub">No payments recorded yet</div>
         </div>
     {% endfor %}
 </div>
 
-<div class="card table-wrap" style="margin-top:1.4rem">
+<div class="card table-wrap" style="margin-top:1.25rem">
     <table>
         <thead>
             <tr><th>Transaction</th><th>Order</th><th>Customer</th><th>Method</th>

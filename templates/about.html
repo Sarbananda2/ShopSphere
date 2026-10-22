@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}About this project - {{ STORE_NAME }}{% endblock %}
+{% from "_macros.html" import icon %}
+{% block title %}Our Story - {{ STORE_NAME }}{% endblock %}
 
 {% block content %}
 <div class="container" style="padding-top:1.4rem">
     <section class="hero" style="background:linear-gradient(135deg,#0ea5e9,#6366f1 50%,#a855f7)">
         <div class="hero-inner">
-            <h1>About this project</h1>
-            <p>{{ STORE_NAME }} is a full-stack e-commerce web application built as an MCA
-               Integrated Project. It demonstrates authentication, catalogue and inventory
-               management, a shopping cart, a simulated payment gateway and an admin back-office.</p>
+            <h1>Our Story &amp; Mission</h1>
+            <p>At {{ STORE_NAME }}, we curate high-quality essentials across electronics, fashion, and home
+               living. Designed for modern life, backed by 24/7 customer care.</p>
             <div class="hero-stats">
                 <div><strong>{{ stats.products }}</strong><span>Products</span></div>
                 <div><strong>{{ stats.orders }}</strong><span>Orders processed</span></div>
@@ -36,12 +36,25 @@
     </div>
 
     <div class="card card-pad" style="margin-top:1.4rem">
-        <h3 style="margin-bottom:.8rem">Technology stack</h3>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-            {% for t in ['Python 3', 'Flask', 'Jinja2', 'SQLite 3', 'Werkzeug security', 'HTML5', 'CSS3 (Grid + Flexbox)', 'Vanilla JavaScript', 'Fetch API', 'unittest'] %}
-                <span class="tag tag-info">{{ t }}</span>
-            {% endfor %}
-        </div>
+        <h3 style="margin-bottom:.9rem">Why Shop With Us</h3>
+        <ul class="trust" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr));margin-top:0">
+            <li>
+                <span class="trust-icon">{{ icon('truck', 18) }}</span>
+                <div><strong>Fast 48-Hour Delivery</strong><span>Free on orders above {{ CURRENCY }}999</span></div>
+            </li>
+            <li>
+                <span class="trust-icon">{{ icon('returns', 18) }}</span>
+                <div><strong>7-Day Easy Returns</strong><span>Simple, no-fuss return window</span></div>
+            </li>
+            <li>
+                <span class="trust-icon">{{ icon('lock', 18) }}</span>
+                <div><strong>100% Encrypted Checkout</strong><span>Card, UPI, net banking &amp; COD</span></div>
+            </li>
+            <li>
+                <span class="trust-icon">{{ icon('headset', 18) }}</span>
+                <div><strong>Dedicated Support</strong><span>24&times;7 customer care</span></div>
+            </li>
+        </ul>
     </div>
 </div>
 {% endblock %}

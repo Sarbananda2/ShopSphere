@@ -23,7 +23,16 @@ function applyResponse(data) {
         }
     });
 
+    // Highlight the coupon badge that the server actually applied.
+    if (data.summary) markCoupon(data.summary.coupon);
+
     if (data.empty) setTimeout(() => location.reload(), 500);
+}
+
+function markCoupon(code) {
+    document.querySelectorAll('[data-coupon]').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.coupon === code);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -72,6 +81,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!data.ok) input.value = '';
         });
     }
+
+    /* ---------------------------------------- coupon quick-pick badges */
+    document.querySelectorAll('[data-coupon]').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const input = document.getElementById('couponInput');
+            if (!input) return;
+            input.value = chip.dataset.coupon;
+            input.focus();
+        });
+    });
 });
 
 async function removeItem(id) {

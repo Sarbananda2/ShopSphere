@@ -573,6 +573,30 @@ class TestAdmin(BaseCase):
         self.assertEqual(res.status_code, 400)
         self.assertIn(b"cannot be higher than MRP", res.data)
 
+    def test_admin_can_set_a_product_photo(self):
+        self.login_admin()
+        photo = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600"
+        self.client.post("/admin/products/new", data={
+            "name": "Photo Gadget", "sku": "IMG-001", "price": "999", "mrp": "1499",
+            "category_id": "1", "stock": "5", "image_url": photo, "is_active": "1",
+        }, follow_redirects=True)
+        with self.app.app_context():
+            product = query("SELECT * FROM products WHERE sku = 'IMG-001'", one=True)
+        self.assertEqual(product["image_url"], photo)
+        res = self.client.get("/product/{}".format(product["id"]))
+        self.assertIn(b'class="detail-img"', res.data)
+
+    def test_non_http_image_url_is_rejected(self):
+        self.login_admin()
+        res = self.client.post("/admin/products/new", data={
+            "name": "Sneaky", "sku": "IMG-002", "price": "100", "mrp": "200",
+            "category_id": "1", "stock": "5", "image_url": "javascript:alert(1)",
+        })
+        self.assertEqual(res.status_code, 400)
+        self.assertIn(b"must start with http", res.data)
+        with self.app.app_context():
+            self.assertIsNone(query("SELECT 1 FROM products WHERE sku = 'IMG-002'", one=True))
+
     def test_admin_can_edit_a_product(self):
         self.login_admin()
         p = self.product()

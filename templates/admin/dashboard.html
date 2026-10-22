@@ -1,5 +1,5 @@
 {% extends "admin/_layout.html" %}
-{% from "_macros.html" import status_tag, art_style %}
+{% from "_macros.html" import status_tag, art_style, art_img, icon %}
 {% block title %}Admin dashboard - {{ STORE_NAME }}{% endblock %}
 {% block page_title %}Admin <span class="gradient-text">dashboard</span>{% endblock %}
 {% block page_sub %}Live snapshot of sales, stock and customers{% endblock %}
@@ -7,42 +7,43 @@
 {% block admin_content %}
 <div class="grid stats-grid">
     <div class="stat s1">
-        <div class="label">Total revenue</div>
+        <div class="stat-top"><div class="label">Total revenue</div><span class="stat-icon">{{ icon('rupee', 19) }}</span></div>
         <div class="value">{{ CURRENCY }}{{ stats.revenue | money }}</div>
         <div class="sub">From paid &amp; COD orders</div>
     </div>
     <div class="stat s2">
-        <div class="label">Orders</div>
+        <div class="stat-top"><div class="label">Orders</div><span class="stat-icon">{{ icon('receipt', 19) }}</span></div>
         <div class="value">{{ stats.orders }}</div>
         <div class="sub">{{ stats.pending }} awaiting payment</div>
     </div>
     <div class="stat s3">
-        <div class="label">Customers</div>
+        <div class="stat-top"><div class="label">Customers</div><span class="stat-icon">{{ icon('users', 19) }}</span></div>
         <div class="value">{{ stats.customers }}</div>
         <div class="sub">Registered accounts</div>
     </div>
     <div class="stat s4">
-        <div class="label">Active products</div>
+        <div class="stat-top"><div class="label">Active products</div><span class="stat-icon">{{ icon('package', 19) }}</span></div>
         <div class="value">{{ stats.products }}</div>
         <div class="sub">{{ stats.stock_units }} units in stock</div>
     </div>
     <div class="stat s5">
-        <div class="label">Inventory value</div>
+        <div class="stat-top"><div class="label">Inventory value</div><span class="stat-icon">{{ icon('wallet', 19) }}</span></div>
         <div class="value">{{ CURRENCY }}{{ stats.stock_value | money }}</div>
         <div class="sub">Stock on hand at selling price</div>
     </div>
     <div class="stat s6">
-        <div class="label">Failed payments</div>
+        <div class="stat-top"><div class="label">Failed payments</div><span class="stat-icon">{{ icon('alert-circle', 19) }}</span></div>
         <div class="value">{{ stats.failed_payments }}</div>
         <div class="sub">Declines &amp; OTP failures</div>
     </div>
 </div>
 
-<div class="grid" style="grid-template-columns:1.4fr 1fr;margin-top:1.4rem">
+<div class="panel-grid">
     <div class="card">
-        <h3 style="padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);font-size:1.05rem">
-            &#9888;&#65039; Low stock alerts
-        </h3>
+        <div class="card-head">
+            <h3><span class="panel-icon warn">{{ icon('alert', 16) }}</span> Low stock alerts</h3>
+            {% if low_stock %}<span class="tag tag-warn">{{ low_stock|length }} item{{ '' if low_stock|length == 1 else 's' }}</span>{% endif %}
+        </div>
         {% if low_stock %}
             <div class="table-wrap">
                 <table>
@@ -52,23 +53,23 @@
                             <tr>
                                 <td>
                                     <div class="cell-prod">
-                                        <span class="cell-art" style="{{ art_style(p.gradient) }}">{{ p.icon }}</span>
+                                        <span class="cell-art{{ ' has-img' if p.image_url }}" style="{{ art_style(p.gradient) }}">{{ art_img(p, 'thumb-img') }}</span>
                                         <div>
                                             <div style="font-weight:600">{{ p.name }}</div>
-                                            <div style="font-size:.76rem;color:var(--muted)">{{ p.sku }}</div>
+                                            <div class="cell-sub">{{ p.sku }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td style="font-size:.85rem;color:var(--muted)">{{ p.category_name }}</td>
                                 <td class="t-right">
                                     {% if p.stock == 0 %}
-                                        <span class="tag tag-err">Out of stock</span>
+                                        <span class="tag tag-dot tag-err">Out of stock</span>
                                     {% else %}
-                                        <span class="tag tag-warn">{{ p.stock }} left</span>
+                                        <span class="tag tag-dot tag-warn">{{ p.stock }} left</span>
                                     {% endif %}
                                 </td>
                                 <td class="t-right">
-                                    <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.inventory') }}">Restock</a>
+                                    <a class="btn btn-outline btn-sm" href="{{ url_for('admin.inventory') }}">Restock</a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -76,32 +77,37 @@
                 </table>
             </div>
         {% else %}
-            <p style="padding:1.2rem;color:var(--muted);font-size:.9rem">Every product is comfortably stocked.</p>
+            <p style="padding:1.2rem 1.4rem;color:var(--muted);font-size:.9rem">Every product is comfortably stocked.</p>
         {% endif %}
     </div>
 
-    <div class="card card-pad">
-        <h3 style="font-size:1.05rem;margin-bottom:1rem">&#128200; Stock by category</h3>
-        {% set max_units = (by_category | map(attribute='units') | max) or 1 %}
-        {% for c in by_category %}
-            <div style="margin-bottom:.9rem">
-                <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.3rem">
-                    <span>{{ c.name }}</span>
-                    <strong>{{ c.units }} units</strong>
+    <div class="card">
+        <div class="card-head">
+            <h3><span class="panel-icon info">{{ icon('chart', 16) }}</span> Stock by category</h3>
+        </div>
+        <div class="card-pad">
+            {% set max_units = (by_category | map(attribute='units') | max) or 1 %}
+            {% for c in by_category %}
+                <div style="margin-bottom:1rem">
+                    <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.35rem">
+                        <span style="color:var(--text-soft)">{{ c.name }}</span>
+                        <strong>{{ c.units }} units</strong>
+                    </div>
+                    <div class="bar">
+                        <i style="width:{{ (c.units / max_units * 100) | round | int }}%;background:{{ c.color }}"></i>
+                    </div>
                 </div>
-                <div class="bar">
-                    <i style="width:{{ (c.units / max_units * 100) | round | int }}%;background:{{ c.color }}"></i>
-                </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
 </div>
 
-<div class="grid" style="grid-template-columns:1.4fr 1fr;margin-top:1.4rem">
+<div class="panel-grid">
     <div class="card">
-        <h3 style="padding:1.1rem 1.2rem;border-bottom:1px solid var(--line);font-size:1.05rem">
-            &#128666; Recent orders
-        </h3>
+        <div class="card-head">
+            <h3><span class="panel-icon brand">{{ icon('truck', 16) }}</span> Recent orders</h3>
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.orders') }}">View all {{ icon('arrow-right', 14) }}</a>
+        </div>
         {% if recent_orders %}
             <div class="table-wrap">
                 <table>
@@ -112,7 +118,7 @@
                                 style="cursor:pointer">
                                 <td>
                                     <div style="font-weight:600;font-size:.86rem">{{ o.order_number }}</div>
-                                    <div style="font-size:.76rem;color:var(--muted)">{{ o.placed_at[:16] }}</div>
+                                    <div class="cell-sub">{{ o.placed_at[:16] }}</div>
                                 </td>
                                 <td style="font-size:.86rem">{{ o.customer }}</td>
                                 <td>{{ status_tag(o.status) }}</td>
@@ -123,29 +129,33 @@
                 </table>
             </div>
         {% else %}
-            <p style="padding:1.2rem;color:var(--muted);font-size:.9rem">No orders placed yet.</p>
+            <p style="padding:1.2rem 1.4rem;color:var(--muted);font-size:.9rem">No orders placed yet.</p>
         {% endif %}
     </div>
 
-    <div class="card card-pad">
-        <h3 style="font-size:1.05rem;margin-bottom:1rem">&#127942; Best sellers</h3>
-        {% if top_products %}
-            {% for p in top_products %}
-                <div style="display:flex;gap:.7rem;align-items:center;padding:.5rem 0;
-                            {{ 'border-top:1px solid var(--line)' if not loop.first }}">
-                    <span style="font-size:1.4rem">{{ p.icon }}</span>
-                    <div style="flex:1;min-width:0">
-                        <div style="font-size:.87rem;font-weight:600">{{ p.product_name }}</div>
-                        <div style="font-size:.76rem;color:var(--muted)">{{ p.sold }} sold</div>
+    <div class="card">
+        <div class="card-head">
+            <h3><span class="panel-icon ok">{{ icon('award', 16) }}</span> Best sellers</h3>
+        </div>
+        <div class="card-pad" style="padding-top:.6rem">
+            {% if top_products %}
+                {% for p in top_products %}
+                    <div style="display:flex;gap:.75rem;align-items:center;padding:.65rem 0;
+                                {{ 'border-top:1px solid var(--line)' if not loop.first }}">
+                        <span class="cell-art{{ ' has-img' if p.image_url }}" style="{{ art_style(p.gradient) }}">{{ art_img(p, 'thumb-img') }}</span>
+                        <div style="flex:1;min-width:0">
+                            <div style="font-size:.87rem;font-weight:600">{{ p.product_name }}</div>
+                            <div class="cell-sub">{{ p.sold }} sold</div>
+                        </div>
+                        <strong style="font-size:.86rem">{{ CURRENCY }}{{ p.revenue | money }}</strong>
                     </div>
-                    <strong style="font-size:.86rem">{{ CURRENCY }}{{ p.revenue | money }}</strong>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p style="color:var(--muted);font-size:.9rem">
-                No sales recorded yet. Place a test order from the storefront to populate this panel.
-            </p>
-        {% endif %}
+                {% endfor %}
+            {% else %}
+                <p style="color:var(--muted);font-size:.9rem;padding-top:.6rem">
+                    No sales recorded yet. Place a test order from the storefront to populate this panel.
+                </p>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

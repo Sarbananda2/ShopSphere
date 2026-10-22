@@ -1,4 +1,5 @@
 {% extends "admin/_layout.html" %}
+{% from "_macros.html" import art_style, art_img %}
 {% block title %}{{ 'Add' if mode == 'new' else 'Edit' }} product - Admin{% endblock %}
 {% block page_title %}{{ 'Add a new' if mode == 'new' else 'Edit' }} <span class="gradient-text">product</span>{% endblock %}
 {% block page_sub %}{{ 'Create a catalogue entry and set its opening stock' if mode == 'new' else 'Update details, pricing and stock' }}{% endblock %}
@@ -35,6 +36,14 @@
             <textarea class="input" id="description" name="description">{{ product.description or '' }}</textarea>
         </div>
 
+        <div class="field">
+            <label for="image_url">Product photo URL</label>
+            <input class="input" id="image_url" name="image_url" type="url" inputmode="url"
+                   value="{{ product.image_url or '' }}"
+                   placeholder="https://images.unsplash.com/photo-...?w=600&amp;q=80&amp;auto=format&amp;fit=crop">
+            <div class="hint">A square studio shot works best. Leave blank to use the emoji + gradient artwork.</div>
+        </div>
+
         <div class="row-3">
             <div class="field">
                 <label for="price">Selling price ({{ CURRENCY }}) *</label>
@@ -57,7 +66,7 @@
             <div class="field">
                 <label for="icon">Display emoji</label>
                 <input class="input" id="icon" name="icon" maxlength="4" value="{{ product.icon or '' }}">
-                <div class="hint">Shown as the product artwork.</div>
+                <div class="hint">Artwork when there is no photo.</div>
             </div>
             <div class="field">
                 <label for="rating">Rating (0-5)</label>
@@ -85,10 +94,8 @@
     <div class="card card-pad summary">
         <h3 style="margin-bottom:.9rem;font-size:1.05rem">Live preview</h3>
         <article class="product-card">
-            <div class="product-art" id="prevArt"
-                 style="background:linear-gradient(135deg,{{ (product.gradient or '#6366f1,#8b5cf6').split(',')[0] }},{{ (product.gradient or '#6366f1,#8b5cf6').split(',')[1] }})">
-                <span id="prevIcon">{{ product.icon or '&#128230;'|safe }}</span>
-            </div>
+            <div class="product-art{{ ' has-img' if product.image_url }}" id="prevArt"
+                 style="{{ art_style(product.gradient or '#6366f1,#8b5cf6') }}">{{ art_img(product, 'product-img') }}</div>
             <div class="product-body">
                 <span class="product-cat" style="color:var(--indigo)">Preview</span>
                 <span class="product-name" id="prevName">{{ product.name or 'Product name' }}</span>
@@ -112,15 +119,35 @@
         if (el) el.addEventListener('input', fn);
     };
     bind('name',  e => document.getElementById('prevName').textContent = e.target.value || 'Product name');
-    bind('icon',  e => document.getElementById('prevIcon').textContent = e.target.value || '\u{1F4E6}');
+    const prevArt = document.getElementById('prevArt');
+    bind('icon',  e => prevArt.querySelector('.art-emoji').textContent = e.target.value || '\u{1F4E6}');
     bind('price', e => document.getElementById('prevPrice').textContent = '{{ CURRENCY }}' + (e.target.value || 0));
     bind('mrp',   e => document.getElementById('prevMrp').textContent = '{{ CURRENCY }}' + (e.target.value || 0));
     bind('gradient', e => {
         const parts = e.target.value.split(',');
         if (parts.length === 2) {
-            document.getElementById('prevArt').style.background =
-                `linear-gradient(135deg,${parts[0].trim()},${parts[1].trim()})`;
+            prevArt.style.setProperty('--art', `linear-gradient(135deg,${parts[0].trim()},${parts[1].trim()})`);
         }
+    });
+
+    /* swap the photo in only once it has loaded, so a half-typed or broken URL
+       leaves the emoji + gradient preview in place */
+    let photoSeq = 0;
+    bind('image_url', e => {
+        const url = e.target.value.trim();
+        const seq = ++photoSeq;
+        prevArt.querySelector('.product-img')?.remove();
+        prevArt.classList.remove('has-img');
+        if (!/^https?:\/\//i.test(url)) return;
+        const img = new Image();
+        img.className = 'product-img';
+        img.alt = '';
+        img.onload = () => {
+            if (seq !== photoSeq) return;          // a newer URL was typed meanwhile
+            prevArt.prepend(img);
+            prevArt.classList.add('has-img');
+        };
+        img.src = url;
     });
 </script>
 {% endblock %}

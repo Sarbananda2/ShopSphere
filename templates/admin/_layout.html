@@ -1,17 +1,20 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
 {% block catbar %}{% endblock %}
 
 {% block content %}
 <div class="container admin-shell">
     <aside class="card admin-nav">
         {% set page = request.endpoint %}
-        <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if page == 'admin.dashboard' }}">&#128202; Dashboard</a>
-        <a href="{{ url_for('admin.products') }}"  class="{{ 'active' if page in ['admin.products', 'admin.product_new', 'admin.product_edit'] }}">&#128230; Products</a>
-        <a href="{{ url_for('admin.inventory') }}" class="{{ 'active' if page == 'admin.inventory' }}">&#127981; Inventory</a>
-        <a href="{{ url_for('admin.orders') }}"    class="{{ 'active' if page == 'admin.orders' }}">&#128666; Orders</a>
-        <a href="{{ url_for('admin.payments') }}"  class="{{ 'active' if page == 'admin.payments' }}">&#128179; Payments</a>
-        <a href="{{ url_for('admin.customers') }}" class="{{ 'active' if page == 'admin.customers' }}">&#128101; Customers</a>
-        <a href="{{ url_for('main.index') }}">&#127978; View storefront</a>
+        <div class="admin-nav-title">Admin panel</div>
+        <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if page == 'admin.dashboard' }}">{{ icon('dashboard', 18) }} Dashboard</a>
+        <a href="{{ url_for('admin.products') }}"  class="{{ 'active' if page in ['admin.products', 'admin.product_new', 'admin.product_edit'] }}">{{ icon('package', 18) }} Products</a>
+        <a href="{{ url_for('admin.inventory') }}" class="{{ 'active' if page == 'admin.inventory' }}">{{ icon('layers', 18) }} Inventory</a>
+        <a href="{{ url_for('admin.orders') }}"    class="{{ 'active' if page == 'admin.orders' }}">{{ icon('truck', 18) }} Orders</a>
+        <a href="{{ url_for('admin.payments') }}"  class="{{ 'active' if page == 'admin.payments' }}">{{ icon('card', 18) }} Payments</a>
+        <a href="{{ url_for('admin.customers') }}" class="{{ 'active' if page == 'admin.customers' }}">{{ icon('users', 18) }} Customers</a>
+        <div class="admin-nav-sep"></div>
+        <a href="{{ url_for('main.index') }}">{{ icon('home', 18) }} View storefront</a>
     </aside>
 
     <div>

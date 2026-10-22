@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% from "_macros.html" import art_style %}
+{% from "_macros.html" import art_style, art_img, icon %}
 {% block title %}Shopping cart - {{ STORE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="container" style="padding-top:1.2rem">
+<div class="container page-pad">
 
     <div class="steps">
         <div class="step active"><i>1</i><span>Cart</span></div><div class="step-line"></div>
@@ -15,22 +15,22 @@
     {% if rows %}
     <div class="cart-layout">
         <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.2rem;border-bottom:1px solid var(--line)">
-                <h2 style="font-size:1.2rem">Your cart <span style="color:var(--muted);font-weight:500">({{ summary.items }} items)</span></h2>
+            <div class="card-head">
+                <h2>Your cart <span class="count">({{ summary['items'] }} item{{ '' if summary['items'] == 1 else 's' }})</span></h2>
                 <form method="post" action="{{ url_for('cart.clear') }}">
-                    <button class="btn btn-danger btn-sm" type="submit">Clear cart</button>
+                    <button class="btn btn-danger btn-sm" type="submit">{{ icon('trash', 15) }} Clear cart</button>
                 </form>
             </div>
 
+            <div class="cart-items">
             {% for r in rows %}
                 <div class="cart-item" data-row="{{ r.id }}">
                     <a href="{{ url_for('main.product_detail', product_id=r.id) }}"
-                       class="cart-art" style="{{ art_style(r.gradient) }}">{{ r.icon }}</a>
+                       class="cart-art{{ ' has-img' if r.image_url }}" style="{{ art_style(r.gradient) }}">{{ art_img(r, 'thumb-img') }}</a>
 
                     <div>
-                        <a href="{{ url_for('main.product_detail', product_id=r.id) }}"
-                           style="font-weight:700;font-size:.97rem">{{ r.name }}</a>
-                        <div style="font-size:.82rem;color:var(--muted);margin:.2rem 0">SKU {{ r.sku }}</div>
+                        <a href="{{ url_for('main.product_detail', product_id=r.id) }}" class="cart-title">{{ r.name }}</a>
+                        <div class="cart-meta">SKU {{ r.sku }}</div>
                         <div style="display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap">
                             <strong>{{ CURRENCY }}{{ r.price | money }}</strong>
                             {% if r.mrp > r.price %}<span class="mrp">{{ CURRENCY }}{{ r.mrp | money }}</span>{% endif %}
@@ -42,54 +42,63 @@
                         </div>
                     </div>
 
-                    <div style="text-align:right;display:grid;gap:.55rem;justify-items:end">
+                    <div class="cart-actions">
                         <div class="qty">
-                            <button type="button" class="cart-step" data-id="{{ r.id }}" data-delta="-1">&minus;</button>
+                            <button type="button" class="cart-step" data-id="{{ r.id }}" data-delta="-1" aria-label="Decrease quantity">{{ icon('minus', 15) }}</button>
                             <span data-qty="{{ r.id }}">{{ r.quantity }}</span>
-                            <button type="button" class="cart-step" data-id="{{ r.id }}" data-delta="1">+</button>
+                            <button type="button" class="cart-step" data-id="{{ r.id }}" data-delta="1" aria-label="Increase quantity">{{ icon('plus', 15) }}</button>
                         </div>
-                        <strong data-line="{{ r.id }}">{{ CURRENCY }}{{ r.line_total | money }}</strong>
-                        <button class="btn btn-danger btn-sm cart-remove" data-id="{{ r.id }}">Remove</button>
+                        <strong class="line-total" data-line="{{ r.id }}">{{ CURRENCY }}{{ r.line_total | money }}</strong>
+                        <button class="btn btn-danger btn-sm cart-remove" data-id="{{ r.id }}">{{ icon('trash', 14) }} Remove</button>
                     </div>
                 </div>
             {% endfor %}
+            </div>
 
-            <div style="padding:1.1rem 1.2rem;border-top:1px solid var(--line)">
-                <a href="{{ url_for('main.index') }}" class="btn btn-outline btn-sm">&larr; Continue shopping</a>
+            <div class="card-footer">
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline btn-sm">{{ icon('arrow-left', 15) }} Continue shopping</a>
             </div>
         </div>
 
-        <div class="card card-pad summary">
-            <h3 style="margin-bottom:.8rem">Price details</h3>
+        <aside class="card card-pad summary">
+            <h3 class="summary-title">Price details</h3>
 
-            <div class="coupon-row">
-                <input class="input" id="couponInput" placeholder="Coupon code"
-                       value="{{ summary.coupon or '' }}" maxlength="20">
-                <button class="btn btn-primary btn-sm" id="couponBtn">Apply</button>
-            </div>
-            <div style="font-size:.78rem;color:var(--muted);margin-bottom:.8rem">
-                Try <strong>WELCOME10</strong>, <strong>MCA25</strong> or <strong>FEST50</strong>
+            <div class="coupon-box">
+                <label class="coupon-label" for="couponInput">{{ icon('tag', 16) }} Have a coupon code?</label>
+                <div class="coupon-row">
+                    <input class="input" id="couponInput" placeholder="Enter coupon code"
+                           value="{{ summary.coupon or '' }}" maxlength="20" autocomplete="off">
+                    <button class="btn btn-primary btn-sm" id="couponBtn">Apply</button>
+                </div>
+                <div class="coupon-chips" role="group" aria-label="Available coupons">
+                    {% for code, label in [('WELCOME10', '10% off'), ('MCA25', '25% off'), ('FEST50', '50% off')] %}
+                        <button type="button" class="coupon-chip {{ 'active' if summary.coupon == code }}"
+                                data-coupon="{{ code }}" title="Use {{ code }}">{{ code }} <small>{{ label }}</small></button>
+                    {% endfor %}
+                </div>
             </div>
 
             <div id="summaryBox">
                 {% include "_summary.html" %}
             </div>
 
-            <a class="btn btn-primary btn-block" style="margin-top:1rem"
-               href="{{ url_for('orders.checkout') }}">Proceed to checkout &rarr;</a>
+            <a class="btn btn-primary btn-block btn-lg" style="margin-top:1.1rem"
+               href="{{ url_for('orders.checkout') }}">Proceed to checkout {{ icon('arrow-right', 18) }}</a>
 
-            <div style="display:flex;gap:.7rem;justify-content:center;margin-top:1rem;font-size:.78rem;color:var(--muted)">
-                <span>&#128274; Secure</span><span>&#128666; Fast delivery</span><span>&#128260; Easy returns</span>
-            </div>
-        </div>
+            <ul class="trust-mini">
+                <li>{{ icon('shield', 14) }} Secure</li>
+                <li>{{ icon('truck', 14) }} Fast delivery</li>
+                <li>{{ icon('returns', 14) }} Easy returns</li>
+            </ul>
+        </aside>
     </div>
 
     {% else %}
         <div class="card empty">
-            <div class="emoji">&#128722;</div>
+            <div class="empty-icon">{{ icon('cart', 30) }}</div>
             <h3>Your cart is empty</h3>
             <p>Browse the catalogue and add a few colourful things to it.</p>
-            <a class="btn btn-primary" href="{{ url_for('main.index') }}">Start shopping</a>
+            <a class="btn btn-primary" href="{{ url_for('main.index') }}">Start shopping {{ icon('arrow-right', 17) }}</a>
         </div>
     {% endif %}
 </div>

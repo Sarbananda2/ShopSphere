@@ -43,8 +43,10 @@ def dashboard():
         "SELECT o.*, u.name AS customer FROM orders o JOIN users u ON u.id = o.user_id"
         " ORDER BY o.id DESC LIMIT 8")
     top_products = query(
-        "SELECT i.product_name, i.icon, SUM(i.quantity) AS sold, SUM(i.line_total) AS revenue"
+        "SELECT i.product_name, i.icon, p.gradient, p.image_url,"
+        "       SUM(i.quantity) AS sold, SUM(i.line_total) AS revenue"
         "  FROM order_items i JOIN orders o ON o.id = i.order_id"
+        "  JOIN products p ON p.id = i.product_id"
         " WHERE o.payment_status IN ('PAID', 'COD_PENDING')"
         " GROUP BY i.product_id ORDER BY sold DESC LIMIT 6")
     by_category = query(
@@ -84,6 +86,7 @@ def _product_form(form):
         "description": (form.get("description") or "").strip(),
         "icon": (form.get("icon") or "\U0001F4E6").strip(),
         "gradient": (form.get("gradient") or "#6366f1,#8b5cf6").strip(),
+        "image_url": (form.get("image_url") or "").strip(),
         "is_active": 1 if form.get("is_active") else 0,
     }
     for field, label, caster, lo in (("price", "Price", float, 0),
@@ -110,6 +113,8 @@ def _product_form(form):
         errors.append("SKU is required.")
     if values.get("mrp") and values.get("price") and values["price"] > values["mrp"]:
         errors.append("Selling price cannot be higher than MRP.")
+    if values["image_url"] and not values["image_url"].lower().startswith(("http://", "https://")):
+        errors.append("Image URL must start with http:// or https://.")
     return values, errors
 
 
@@ -128,11 +133,11 @@ def product_new():
 
         product_id = execute(
             "INSERT INTO products (name, sku, description, price, mrp, category_id, stock,"
-            " icon, gradient, rating, is_active, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " icon, gradient, image_url, rating, is_active, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (values["name"], values["sku"], values["description"], values["price"],
              values["mrp"], values["category_id"], values["stock"], values["icon"],
-             values["gradient"], values["rating"], values["is_active"], now()))
+             values["gradient"], values["image_url"], values["rating"], values["is_active"], now()))
         log_stock(product_id, values["stock"], values["stock"], "Initial stock (admin)")
         flash("Product \"{}\" created.".format(values["name"]), "success")
         return redirect(url_for("admin.products"))
@@ -168,11 +173,12 @@ def product_edit(product_id):
                       "Stock corrected by admin")
         execute(
             "UPDATE products SET name = ?, sku = ?, description = ?, price = ?, mrp = ?,"
-            " category_id = ?, stock = ?, icon = ?, gradient = ?, rating = ?, is_active = ?"
-            " WHERE id = ?",
+            " category_id = ?, stock = ?, icon = ?, gradient = ?, image_url = ?, rating = ?,"
+            " is_active = ? WHERE id = ?",
             (values["name"], values["sku"], values["description"], values["price"],
              values["mrp"], values["category_id"], values["stock"], values["icon"],
-             values["gradient"], values["rating"], values["is_active"], product_id))
+             values["gradient"], values["image_url"], values["rating"], values["is_active"],
+             product_id))
         flash("Product \"{}\" updated.".format(values["name"]), "success")
         return redirect(url_for("admin.products"))
 
