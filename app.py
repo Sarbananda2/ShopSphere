@@ -4,6 +4,7 @@ MCA Integrated Project | Flask + SQLite
 
 Run with:  python app.py       then open  http://127.0.0.1:5000
 """
+import os
 from flask import Flask, render_template, session
 
 from config import Config
@@ -16,9 +17,15 @@ from routes.order_routes import bp as orders_bp
 from routes.payment_routes import bp as payment_bp
 from services import cart_count
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 
 def create_app(config_object=Config):
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(BASE_DIR, "templates"),
+        static_folder=os.path.join(BASE_DIR, "static"),
+    )
     app.config.from_object(config_object)
 
     app.teardown_appcontext(close_db)
@@ -71,7 +78,10 @@ def create_app(config_object=Config):
 
     # -------------------------------------------------------- First-run setup
     with app.app_context():
-        init_db(seed=True)
+        try:
+            init_db(seed=True)
+        except Exception as e:
+            app.logger.warning("Database init check skipped or failed on startup: %s", e)
 
     return app
 
